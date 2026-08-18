@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Piano Flow｜琴鍵數字練習</title>
+<!--
+  PIANO FLOW STANDALONE EXPORT
+  這是一個無外部依賴的單檔 HTML。
+  交給 Codex 修改時，可直接要求它搜尋：
+  1. APP DATA：歌曲、頁碼、小節與音符資料
+  2. DESIGN：所有畫面樣式
+  3. APP LOGIC：所有互動功能
+-->
+<style>
+/* ==================== DESIGN：從這裡修改外觀 ==================== */
+:root{--ink:#171714;--paper:#f3f0e8;--acid:#d8ff47;--orange:#ff6647;--line:#c9c5ba;--muted:#706e67;--white:#fff}*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,"Noto Sans TC",sans-serif}.topbar{height:70px;position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:0 max(18px,4vw);border-bottom:1px solid var(--line);background:rgba(243,240,232,.94);backdrop-filter:blur(12px)}.brand{display:flex;align-items:center;gap:10px;font-weight:900}.brandmark{display:grid;place-items:center;width:34px;height:34px;border:2px solid;border-radius:50%;font-size:11px}.session:before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--orange)}.session{font-size:12px}.shell{max-width:1180px;margin:auto;padding:60px 28px}.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:end;margin-bottom:48px}.eyebrow{margin:0 0 14px;font-size:10px;font-weight:900;letter-spacing:.15em;text-transform:uppercase}.hero h1,.section-title h2,.catalog-head h2{margin:0;font:400 clamp(44px,7vw,88px)/.98 Georgia,"Noto Serif TC",serif;letter-spacing:-.045em}.hero h1 em,.section-title em,.catalog-head em{color:var(--orange);font-style:italic}.hero>p{margin:0;font-size:17px;line-height:1.7;color:#4d4b44}/* 欄數跟著曲目數量走。寫死 2 欄的話，匯入第 3 首會變成 2×2 而空出一格 */
+.song-switch{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin-bottom:42px;border:1px solid var(--ink)}.song-switch button{min-height:88px;padding:17px 20px;border:0;border-right:1px solid var(--ink);background:#fff;text-align:left;cursor:pointer}.song-switch button:last-child{border-right:0}.song-switch button.on{background:var(--acid)}.song-switch small,.song-switch b{display:block}.song-switch small{margin-bottom:8px;color:var(--muted)}.song-switch b{font-size:18px}.panel{margin:0 0 42px;border:2px solid var(--ink);background:#fff}.catalog-head{display:grid;grid-template-columns:1fr 190px;gap:30px;align-items:center;padding:30px;background:var(--ink);color:#fff}.catalog-head h2{font-size:clamp(34px,5vw,62px)}.catalog-head p:last-child{max-width:700px;color:#c9c9c3;line-height:1.65}.count{display:grid;place-items:center;padding:22px;border:2px solid var(--acid)}.count b{font:700 60px/1 Georgia;color:var(--acid)}.count span,.count small{font-size:11px}.count small{margin-top:8px;color:#aaa}.page-block{background:#eeeae1;border-top:1px solid #999}.page-block.active{background:#fff8dd}.page-label{display:flex;justify-content:space-between;padding:13px 18px}.page-label small,.page-label b{display:block}.page-label small{color:#777}.measure-grid{display:grid;grid-template-columns:repeat(10,1fr);background:#aaa;gap:1px}.measure-grid button{min-width:0;min-height:72px;padding:8px;border:0;background:#fff;text-align:left;cursor:pointer}
+/* 琴鍵數字模式：格子直接列出這一小節要按的琴鍵編號，不必先看懂五線譜 */
+.measure-grid.keys{grid-template-columns:repeat(4,1fr)}
+.measure-grid.keys button{min-height:64px;padding:9px 10px}
+.kc-row{display:flex;flex-wrap:wrap;gap:3px;margin-top:5px}
+/* color 一定要寫死。選中的格子會把文字改成白色，白底的白鍵編號就會整個消失 */
+.kc{display:inline-flex;align-items:center;justify-content:center;min-width:25px;height:25px;padding:0 5px;border:1px solid var(--ink);border-radius:4px;background:var(--white);color:var(--ink);font:700 14px/1 inherit;font-style:normal}
+/* 黑鍵在琴上沒有印數字，所以標「夾住它的兩個白鍵」，並用黑底對應實體黑鍵 */
+.kc.blk{background:var(--ink);color:var(--white);font-size:11px;letter-spacing:-.2px}
+.kc.rest{border-style:dashed;background:transparent;color:var(--muted);font-weight:400}
+.measure-grid button.selected .kc.rest{color:var(--white);border-color:var(--white)}
+.kc-bar{font-size:11px;color:var(--muted);letter-spacing:.04em}
+/* 同時要按的鍵疊成一直行，跟「先後按」在視覺上分開 */
+.kc-stack{display:inline-flex;flex-direction:column;gap:2px;padding:2px;border:1px solid var(--muted);border-radius:5px}
+.current-note strong i{padding:0 4px;font-size:.5em;font-style:normal;opacity:.55}
+.flow button b i{padding:0 2px;font-size:.7em;font-style:normal;opacity:.55}
+.measure-grid.keys button.selected .kc{border-color:var(--ink)}.measure-grid small,.measure-grid b,.measure-grid span{display:block}.measure-grid small{font-size:9px;color:#999}.measure-grid b{margin:5px 0;font:700 24px/1 Georgia}.measure-grid span{overflow:hidden;color:#777;font-size:9px;white-space:nowrap;text-overflow:ellipsis}.measure-grid button.selected{background:var(--orange);color:#fff;box-shadow:inset 0 0 0 3px var(--ink)}.measure-grid button.selected small,.measure-grid button.selected span{color:#fff}.measure-grid button.guided{background:#e5f5b0}.sticky-choice{position:sticky;bottom:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:18px;padding:14px 18px;background:var(--acid);border-top:2px solid var(--ink)}.sticky-choice small,.sticky-choice b{display:block}.sticky-choice button,.btn{min-height:44px;padding:0 17px;border:1px solid var(--ink);background:var(--ink);color:#fff;font-weight:900;cursor:pointer}.quick{margin-bottom:42px}.quick-head{display:grid;grid-template-columns:1fr 180px;gap:28px;align-items:center;padding:30px;background:var(--ink);color:#fff}.quick-head h2{margin:6px 0 12px;font:400 clamp(34px,5vw,60px)/1.03 Georgia}.quick-head h2 em{color:var(--acid);font-style:italic}.quick-head p:last-child{color:#ccc;line-height:1.6}.goal{display:grid;place-items:center;align-content:center;aspect-ratio:1;border:9px solid var(--acid);border-radius:50%}.goal b{font:700 54px/1 Georgia}.goal span{font-size:11px}.accuracy{padding:15px 22px;background:#fff0d9;border:2px solid var(--orange);line-height:1.55}.group-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#999}.group-tabs button{min-height:76px;padding:12px;border:0;background:#eeeae1;text-align:left;cursor:pointer}.group-tabs button.on{background:var(--acid)}
+.group-tabs.two{grid-template-columns:repeat(2,1fr)}
+.white-toggle{margin:14px 0;padding:13px 16px;border:1px solid var(--line);background:var(--white)}
+.white-toggle.on{border-color:var(--ink);background:#f5f8e4}
+.white-toggle button{padding:9px 16px;border:1px solid var(--ink);background:var(--paper);font:700 15px/1 inherit;cursor:pointer}
+.white-toggle.on button{background:var(--acid)}
+.white-toggle>b{font-size:16px}
+.white-toggle small{display:block;margin-top:9px;color:var(--muted);font-size:13px;line-height:1.6}.lesson{background:#fff;border:1px solid var(--ink);box-shadow:8px 8px 0 var(--ink)}.lesson-head{display:flex;justify-content:space-between;gap:20px;padding:25px;border-bottom:1px solid var(--line)}.lesson-head h2{margin:4px 0;font:400 clamp(28px,4vw,44px) Georgia}.badge{padding:10px;background:var(--orange);font-size:11px;font-weight:900;text-align:center}.note-stage{padding:25px}.current-note{display:flex;align-items:center;gap:20px;margin:20px 0}.current-note>strong{display:grid;place-items:center;width:100px;height:100px;border-radius:50%;background:var(--orange);font-size:34px}.current-note b,.current-note small{display:block}.current-note b{font-size:20px}.current-note small{margin-top:6px;color:var(--muted)}.note-strip{display:flex;overflow:auto}.note-strip button{min-width:74px;height:64px;border:1px solid var(--line);background:#f5f3ed}.note-strip button.now{background:var(--acid);transform:translateY(-4px)}.note-strip button b,.note-strip button small{display:block}.piano-wrap{margin:16px 25px 25px;overflow-x:auto}.range-label{margin-bottom:8px;color:var(--muted);font-size:10px;letter-spacing:.08em}.piano-scroll{overflow-x:auto}.piano{position:relative;display:flex;width:1664px;height:170px;border:2px solid var(--ink);background:#111}.white-key{position:relative;flex:1;border:0;border-right:1px solid #777;background:#fbfaf5}.white-key span{position:absolute;right:0;bottom:9px;left:0}.white-key b,.white-key small{display:block}.white-key small{font-size:8px;color:#777}.white-key.active{background:var(--acid)}
+/* 這一小節等一下會用到的鍵，先淡淡標起來，眼睛才知道手該擺哪 */
+.white-key.inbar{background:#e8edd0}
+.black-key.inbar{background:#4a5230}
+.white-key b{font-size:15px}
+.white-key small{font-size:10px}.black-key{position:absolute;top:0;z-index:2;width:22px;height:60%;border:0;border-radius:0 0 3px 3px;background:#171714;transform:translateX(-50%)}.black-key.active{background:var(--orange)}.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 25px 24px}.actions button{min-height:52px;border:1px solid var(--ink);font-weight:900;cursor:pointer}.actions .primary{background:var(--acid)}.tempo{padding:18px 25px;background:#f1efe8}.tempo label,.tempo div{display:flex;justify-content:space-between}.tempo input{width:100%;margin:12px 0;accent-color:var(--orange)}.tempo div{font-size:10px;color:var(--muted)}.score-head{display:flex;justify-content:space-between;gap:20px;padding:25px;background:var(--ink);color:#fff}.score-head h2{margin:5px 0;font:400 clamp(28px,4vw,45px) Georgia}.score-head em{color:var(--acid)}.score-meta{text-align:right}.score-meta b,.score-meta span{display:block}.score-meta span{margin-top:5px;color:#aaa;font-size:11px}.page-tabs{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:#777}.page-tabs.three{grid-template-columns:repeat(3,1fr)}.page-tabs button{min-height:70px;padding:10px;border:0;background:#eeeae1;text-align:left}.page-tabs button.on{background:var(--acid)}.page-tabs small,.page-tabs b{display:block}.score-image{max-height:920px;padding:14px;overflow:auto;background:#d8d5ce;text-align:center}.score-image img{max-width:100%;height:auto;background:#fff;box-shadow:0 8px 28px #0003}.score-image.zoom img{width:1350px;max-width:none}.score-controls{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:8px;padding:14px}.score-controls button{min-height:46px;border:1px solid var(--ink);background:#fff;font-weight:900}.score-controls .main{background:var(--acid)}.practice-box{padding:26px}.practice-box h2{margin:4px 0 16px;font:400 clamp(30px,5vw,52px) Georgia}.flow{display:flex;flex-wrap:wrap;gap:6px}.flow button{min-width:65px;min-height:58px;border:1px solid #999;background:#fff}.flow button.on{background:var(--orange);color:#fff}.flow button b,.flow button small{display:block}.setup{padding:28px}.setup h2{font:400 clamp(32px,5vw,55px) Georgia;margin:5px 0 22px}.setup-card{padding:24px;border:1px solid #999;background:#f4f1e8}.setup-card h3{font:700 25px Georgia}.setup-card p{line-height:1.65}.setup-nav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}.setup-nav button{min-height:48px}.footer{padding:45px 0 10px;text-align:center;color:#777;font-size:10px;letter-spacing:.18em}.notice{padding:18px 22px;background:#fff0d9;border:2px solid var(--orange);line-height:1.6}.hidden{display:none!important}
+@media(max-width:700px){.shell{padding:38px 14px}.hero{grid-template-columns:1fr;gap:22px}.song-switch{grid-template-columns:1fr}.song-switch button{border-right:0;border-bottom:1px solid var(--ink)}.catalog-head,.quick-head{grid-template-columns:1fr;padding:22px}.count{width:145px}.measure-grid{grid-template-columns:repeat(5,1fr)}.sticky-choice{align-items:stretch;flex-direction:column}.sticky-choice button{width:100%}.group-tabs{grid-template-columns:1fr}.lesson-head{display:block}.badge{display:inline-block;margin-top:12px}.actions{grid-template-columns:1fr}.score-head{display:block}.score-meta{text-align:left;margin-top:12px}.page-tabs{grid-template-columns:1fr 1fr}.page-tabs.three{grid-template-columns:1fr}.score-controls{grid-template-columns:1fr 1fr}.score-controls .main{grid-column:1/-1;grid-row:1}.setup-nav{grid-template-columns:1fr}}
+@media(orientation:landscape) and (max-height:600px){.topbar,.hero,.song-switch,.catalog,.accuracy,.group-tabs,.score-panel,.setup-panel,.footer{display:none!important}.shell{max-width:none;padding:6px}.quick{margin:0}.quick-head{display:none}.lesson{box-shadow:none}.lesson-head,.tempo{display:none}.note-stage{padding:6px}.current-note{margin:4px 0}.current-note>strong{width:70px;height:70px}.piano-wrap{margin:3px}.piano{height:90px}.actions{grid-template-columns:1fr 1fr;padding:3px}.actions button{min-height:34px}}
+</style>
+</head>
+<body>
+<header class="topbar"><div class="brand"><span class="brandmark">PF</span><span>Piano Flow</span></div><div class="session">線上版 · 不含曲譜圖</div></header>
+<main class="shell">
+  <section class="hero"><div><p class="eyebrow">電子琴跟彈教室</p><h1>不看五線譜，<br><em>也能開始彈。</em></h1></div><p>這份檔案把曲譜圖片、琴鍵數字、播放器與介面全部放在同一個 HTML 裡。可離線開啟，也可直接交給 Codex 修改。</p></section>
+  <nav class="song-switch" aria-label="選擇曲目"><button data-song="lifelong"><small>01 · 1＝G · 114 小節</small><b>一生所愛</b></button></nav>
+  <div id="app"></div>
+  <footer class="footer">PIANO FLOW · STANDALONE HTML</footer>
+</main>
+
+<script>
+/* ==================== APP DATA：從這裡修改歌曲資料 ==================== */
+const DATA={"lifelongPages":[{"src":"","start":1,"end":41,"title":"前奏與主題"},{"src":"","start":42,"end":87,"title":"主題再現與副歌"},{"src":"","start":88,"end":114,"title":"尾段與結尾"}],"lifelongBars":[["2","2","4","4"],["2","2","2"],["1","3","1"],["1","2","1"],["l7","2","2","l7"],["l7","2","l7"],["l6","1","3","1"],["l6","1","2","1"],["2","4","2"],["2","2","2"],["1","3","1"],["1","2","1"],["l7","2","2","l7"],["l7","2","l7"],["l6","1","3","1"],["1","2","1"],["6","6","7","h1"],["h1","h1","h1","h2","h3"],["6"],["6"],["6","6","7","7"],["h1","h1","h2","5"],["3","3"],["3","4","3","2","1"],["2","l7","l7"],["l7","l7"],["1","2","3"],["3","4","3","2","1"],["2","l7","l7"],["l7","l6","l5"],["l6","l6"],["6"],["6","5","6"],["6","h1","6"],["5","3"],["3","3","5"],["6"],["6","h1","h1","h2"],["3","5","3","3"],["3"],["6","5","6"],["6","h1","h1"],["6","5","5","5","3"],["3","l6","1"],["3","2","2","2","1"],["1","l6","l5"],["6"],["6"],["2","2","4","4"],["2","2","2"],["1","3","1"],["1","2","1"],["l7","2","2","l7"],["l7","2","l7"],["l6","1","3","1"],["l6","1","2","1"],["2","4","2"],["2","2","2"],["1","3","1"],["1","2","1"],["l7","2","2","l7"],["l7","2","l7"],["l6","1","3","1"],["1","2","1"],["6","6","7","h1"],["h1","h1","h2","h3"],["6"],["6"],["6","6","7","7"],["h1","h1","h2","5"],["3","3"],["3","4","3","2","1"],["2","l7","l7"],["l7","l7"],["1","2","3","3"],["3","4","3","2","1"],["2","l7","l7"],["l7","l7","l6","l5"],["l6","l6"],["6"],["6","5","6"],["6","h1","6"],["5","3"],["3","3","5"],["6"],["6","h1","h1","h2"],["3","5","3","3"],["3"],["6","5","6"],["6","h1","h1"],["6","5","5","5","3"],["3","l6","1"],["3","2","2","2","1"],["1","l6","l5"],["6"],["6"],["6","5","6"],["6","h1","6"],["5","3"],["3","3","5"],["6"],["6","h1","h1","h2"],["3","5","3","3"],["3"],["6","5","6"],["6","h1","h1"],["6","5","5","5","3"],["3","l6","1"],["3","2","2","2","1"],["1","l6","l5"],["6"],["6","1","2","1"],["6","1","3","1"],["6"]]};
+/* ==================== IMPORTED SONGS：由 extract_score.py + inject_song.py 自動注入 ====================
+   這一整段由工具重寫，請不要手動編輯裡面的內容。
+   要新增曲目：python3 inject_song.py <樂譜.pdf>
+   要移除某一首：python3 inject_song.py --remove <曲目代號>
+   要全部清空：把下面那行的中括號內容刪成空陣列
+   ==================================================================================================== */
+const IMPORTED_SONGS=[{"id":"mcml","title":"Merry Christmas, Mr. Lawrence","composer":"Merry Christmas, Mr. Lawrence - Ryuichi Sakamoto (Piano Solo)","key":"D♭大調 / B♭小調","totalBars":75,"pages":[{"index":0,"start":1,"end":16,"title":"第 1 頁","src":""},{"index":1,"start":17,"end":33,"title":"第 2 頁","src":""},{"index":2,"start":34,"end":53,"title":"第 3 頁","src":""},{"index":3,"start":54,"end":75,"title":"第 4 頁","src":""}],"bars":[{"bar":1,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]]},{"bar":2,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["Gb3","F4","Db4","Bb3"]]},{"bar":3,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["F4","C4","Ab3"]]},{"bar":4,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["F4","C4","Ab3"]]},{"bar":5,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":6,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":7,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":8,"page":0,"rh":[["C5"],["Bb4"],["C5"],["F5"],["C5"],["Bb4"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":9,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]]},{"bar":10,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]]},{"bar":11,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["F4","C4","Ab3"]]},{"bar":12,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["C4","Ab3","F4"]]},{"bar":13,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["C6"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":14,"page":0,"rh":[["Ab5"],["Eb5"],["Db5"],["C6"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":15,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["C6"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":16,"page":0,"rh":[["Ab5"],["Eb5"],["Db5"],["C6"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":17,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":18,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":19,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":20,"page":1,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":21,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":22,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":23,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]]},{"bar":24,"page":1,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":25,"page":1,"rh":[],"lh":[["Bb3","Bb2"],["C3"],["Db3"]]},{"bar":26,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Gb4","Eb4","C4"],["Bb4"],["Bb4","Gb4","Eb4","C4"]],"lh":[["Ab2"]]},{"bar":27,"page":1,"rh":[["Gb4","Eb4","C4","Bb4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Bb4"],["Ab4"],["Gb4"]],"lh":[["Ab2"]]},{"bar":28,"page":1,"rh":[["F4","Db4","Bb3","Gb3"],["Eb4"],["F4"],["Eb4"],["Eb4"],["Db4","Bb3","Gb3"],["F4"],["F4","Db4","Bb3","Gb3"]],"lh":[["Eb2"]]},{"bar":29,"page":1,"rh":[["Db4","Bb3","Gb3","F4"],["Eb4"],["F4"],["Eb4"],["Eb4"],["Eb4"],["F4"],["Gb4"]],"lh":[["Eb2"]]},{"bar":30,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Gb4","Eb4","C4"],["Bb4"],["Bb4","Gb4","Eb4","C4"]],"lh":[["Ab2"]]},{"bar":31,"page":1,"rh":[["Gb4","Eb4","C4","Bb4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Bb4"],["Ab4"],["Gb4"]],"lh":[["Ab2"]]},{"bar":32,"page":1,"rh":[["Bb3","G3","F4"],["Eb4"],["F4"],["Bb4"],["Bb4"],["F4"],["F4"]],"lh":[["Eb2"]]},{"bar":33,"page":1,"rh":[["C4","A3","F4"],["Eb4"],["F4"],["A4"],["A4"]],"lh":[["F2"]]},{"bar":34,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":35,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":36,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":37,"page":2,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":38,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":39,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb5","Eb6"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":40,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]]},{"bar":41,"page":2,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":42,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":43,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":44,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":45,"page":2,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":46,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":47,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Gb3","Gb2"]]},{"bar":48,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"],["Db5"]],"lh":[["F3","F2"],["Eb3","Eb2"]]},{"bar":49,"page":2,"rh":[["Bb4","Eb4","C4"],["Ab4"],["Ab4","Eb4","C4"],["F4"]],"lh":[["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":50,"page":2,"rh":[["F5","Db5","Bb4","Gb4"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"]],"lh":[["Gb2"]]},{"bar":51,"page":2,"rh":[["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"]],"lh":[["Gb2"]]},{"bar":52,"page":2,"rh":[["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"]],"lh":[["F2"]]},{"bar":53,"page":2,"rh":[["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"]],"lh":[["F2"]]},{"bar":54,"page":3,"rh":[["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"]],"lh":[["Gb2"]]},{"bar":55,"page":3,"rh":[["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"]],"lh":[["Gb2"]]},{"bar":56,"page":3,"rh":[["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Ab3","Db4"],["Eb4"]],"lh":[["F2"]]},{"bar":57,"page":3,"rh":[["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Eb4","Ab3"],["Eb4","Ab3"]],"lh":[["F2"]]},{"bar":58,"page":3,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":59,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":60,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":61,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":62,"page":3,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":63,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":64,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":65,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]]},{"bar":66,"page":3,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":67,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":68,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":69,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":70,"page":3,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":71,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":72,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Gb3","Gb2"]]},{"bar":73,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"],["Db5"]],"lh":[["F3","F2"],["Eb3","Eb2"]]},{"bar":74,"page":3,"rh":[["Bb4","Eb4","C4"],["Ab4"],["Ab4","Eb4","C4"],["F4"]],"lh":[["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":75,"page":3,"rh":[["F4","Db4","Bb3","Gb3"]],"lh":[["Gb2","Gb1"]]}]},{"id":"mcml-white","derivedFrom":"mcml","whiteOnly":true,"title":"Merry Christmas, Mr. Lawrence（只用白鍵）"},{"id":"mcml-easy","derivedFrom":"mcml","whiteOnly":true,"melodyOnly":true,"title":"Merry Christmas, Mr. Lawrence（只用白鍵 · 單音入門）"}];
+/* ==================== END IMPORTED SONGS ==================== */
+
+const DEGREE_NOTE={l5:"D4",l6:"E4",l7:"F#4","1":"G4","2":"A4","3":"B4","4":"C5","5":"D5","6":"E5","7":"F#5",h1:"G5",h2:"A5",h3:"B5"};
+
+
+/* ==================== APP LOGIC：從這裡修改互動功能 ==================== */
+const NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const state=Object.assign({song:"",noteIndex:0,bpm:36,lifeBar:1,lifePage:0,zoom:false,impBar:1,impPage:0,hand:"rh"},JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
+/* 曲目順序：由易到難——單音入門 → 純白鍵 → 原調。新手打開就落在最容易的 */
+function songLevel(s){return (s.melodyOnly?0:s.whiteOnly?1:2)}
+function orderedSongs(){
+  return IMPORTED_SONGS.slice().sort(function(a,b){return songLevel(a)-songLevel(b)})}
+/* 上次選的曲目若已被移除就退回第一首，否則整頁會空白 */
+const _valid=orderedSongs().map(function(s){return 'imp:'+s.id}).concat(['lifelong']);
+if(_valid.indexOf(state.song)<0)state.song=_valid[0];
+const app=document.getElementById("app");
+function save(){localStorage.setItem("pianoFlowStandaloneState",JSON.stringify(state))}
+function normalize(note){return note.replace("Db","C#").replace("Eb","D#").replace("Gb","F#").replace("Ab","G#").replace("Bb","A#")}
+function midi(note){const n=normalize(note);return(Number(n.slice(-1))+1)*12+NAMES.indexOf(n.slice(0,-1))}
+function noteFromMidi(value){return NAMES[value%12]+(Math.floor(value/12)-1)}
+function isBlack(note){return normalize(note).includes("#")}
+function whiteNumber(note){let count=0;for(let key=21;key<=midi(note);key++)if(!NAMES[key%12].includes("#"))count++;return count}
+function numberLabel(note){return isBlack(note)?whiteNumber(note)+"–"+(whiteNumber(note)+1)+"黑":String(whiteNumber(note))}
+function keyLabel(note){return isBlack(note)?"白鍵 "+whiteNumber(note)+" 與 "+(whiteNumber(note)+1)+" 中間的黑鍵":"白鍵 "+whiteNumber(note)+" 號"}
+function pageForBar(pages,bar){return Math.max(0,pages.findIndex(function(p){return bar>=p.start&&bar<=p.end}))}
+function degreeLabel(degree){return degree[0]==="l"?"低"+degree.slice(1):degree[0]==="h"?"高"+degree.slice(1):degree}
+function playPiano(note,duration){duration=duration||.55;const Audio=window.AudioContext||window.webkitAudioContext;const ctx=playPiano.ctx||(playPiano.ctx=new Audio());const frequency=440*Math.pow(2,(midi(note)-69)/12);const master=ctx.createGain();master.gain.setValueAtTime(.0001,ctx.currentTime);master.gain.exponentialRampToValueAtTime(.22,ctx.currentTime+.012);master.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+duration);[1,2,3].forEach(function(mult,index){const osc=ctx.createOscillator(),gain=ctx.createGain();osc.type="sine";osc.frequency.value=frequency*mult;gain.gain.value=[1,.22,.08][index];osc.connect(gain).connect(master);osc.start();osc.stop(ctx.currentTime+duration+.03)});master.connect(ctx.destination)}
+function keyRange(active,notes){
+  /* 只顯示這一小節真正用得到的音域。整排 88 鍵得左右橫move 才看得完，
+     但彈琴時雙手都在琴上，沒有手可以滑螢幕——所以鍵盤必須一屏看完。 */
+  const used=(notes||[]).concat(active?[active]:[]).filter(Boolean);
+  if(!used.length)return[1,52];
+  const ws=used.map(whiteNumber);
+  let w0=Math.min.apply(null,ws)-2;
+  let w1=Math.max.apply(null,used.map(function(n){return whiteNumber(n)+(isBlack(n)?1:0)}))+2;
+  const MIN=11;/* 太窄會失去方位感，至少給一個八度多一點 */
+  if(w1-w0+1<MIN){const pad=Math.ceil((MIN-(w1-w0+1))/2);w0-=pad;w1+=pad}
+  if(w0<1){w1+=1-w0;w0=1}
+  if(w1>52){w0-=w1-52;w1=52}
+  return[Math.max(1,w0),Math.min(52,w1)]}
+function keyboard(active,notes){
+  /* active 可以是一個音，也可以是一組同時要按的音 */
+  const act=(active==null?[]:[].concat(active)).filter(Boolean);
+  const on={};act.forEach(function(n){on[normalize(n)]=1});
+  const all=Array.from({length:88},function(_,i){return noteFromMidi(i+21)});
+  const r=keyRange(act[0],notes),w0=r[0],w1=r[1],span=w1-w0+1;
+  const whites=all.filter(function(n){return!isBlack(n)&&whiteNumber(n)>=w0&&whiteNumber(n)<=w1});
+  const blacks=all.filter(function(n){return isBlack(n)&&whiteNumber(n)>=w0&&whiteNumber(n)<w1});
+  const inBar={};(notes||[]).forEach(function(n){if(n)inBar[normalize(n)]=1});
+  return '<div class="piano-wrap"><div class="range-label">白鍵 '+w0+'–'+w1+'　·　中央 C 是 24　·　'
+    +(span<52?'只顯示這一小節用得到的琴鍵，不必左右滑動':'完整 88 鍵')+'</div>'
+    +'<div class="piano-scroll"><div class="piano" style="width:100%">'
+    +whites.map(function(n){const a=on[normalize(n)];return '<button class="white-key '+(a?'active ':'')
+      +(inBar[normalize(n)]&&!a?'inbar':'')+'" data-action="key" data-note="'+n
+      +'"><span><b>'+whiteNumber(n)+'</b><small>'+n+'</small></span></button>'}).join('')
+    +blacks.map(function(n){const a=on[normalize(n)];return '<button aria-label="'+keyLabel(n)+'" class="black-key '
+      +(a?'active ':'')+(inBar[normalize(n)]&&!a?'inbar':'')
+      +'" style="left:'+((whiteNumber(n)-w0+1)/span*100)+'%" data-action="key" data-note="'+n+'"></button>'}).join('')
+    +'</div></div></div>'}
+function pageTabs(pages,current,kind){return '<div class="page-tabs '+(pages.length===3?'three':'')+'">'+pages.map(function(p,i){return '<button class="'+(i===current?'on':'')+'" data-action="page" data-kind="'+kind+'" data-page="'+i+'"><small>第 '+(i+1)+' 頁 · '+p.start+'–'+p.end+'</small><b>'+p.title+'</b></button>'}).join('')+'</div>'}
+function scorePanel(pages,page,kind,title){const p=pages[page];return '<section class="panel score-panel" id="score"><div class="score-head"><div><p class="eyebrow">完整指定曲譜</p><h2>'+title+'<br><em>頁面與小節同步。</em></h2></div><div class="score-meta"><b>第 '+(page+1)+' 頁／'+pages.length+'</b><span>小節 '+p.start+'–'+p.end+'</span></div></div>'+pageTabs(pages,page,kind)
++(p.src
+  ? '<div class="score-image '+(state.zoom?'zoom':'')+'"><img src="'+p.src+'" alt="曲譜第 '+(page+1)+' 頁"></div>'
+  /* 線上版不附曲譜掃描圖（樂譜有版權），琴鍵數字與跟彈功能完全一樣 */
+  : '<div class="notice">這個線上版沒有附曲譜掃描圖。小節目錄的琴鍵數字、逐小節跟彈與播放都和完整版一樣，照著數字彈即可。</div>')
++'<div class="score-controls"><button data-action="page" data-kind="'+kind+'" data-page="'+(page-1)+'" '+(page===0?'disabled':'')+'>← 上一頁</button><button class="main" data-action="zoom">'+(state.zoom?'縮小曲譜':'放大曲譜')+'</button><button data-action="page" data-kind="'+kind+'" data-page="'+(page+1)+'" '+(page===pages.length-1?'disabled':'')+'>下一頁 →</button></div></section>'}
+/* ---------- 匯入曲目：資料由 PDF 自動萃取，所以每一小節都有音符 ----------
+   同一首譜會產生兩個曲目：原調版，以及固定移調成全白鍵的新手版。
+   白鍵版用 derivedFrom 指回原曲，共用同一份 bars 與曲譜圖片——
+   複製一份的話，光是 4 頁 base64 圖就會讓檔案多將近 1MB。 */
+function impSong(id){
+  const s=IMPORTED_SONGS.filter(function(x){return x.id===id})[0];
+  if(!s)return undefined;
+  if(!s.derivedFrom)return s;
+  const base=IMPORTED_SONGS.filter(function(x){return x.id===s.derivedFrom})[0];
+  if(!base)return undefined;
+  return Object.assign({},base,s,{pages:base.pages,bars:base.bars});}
+function impCurrent(){return impSong(state.song.slice(4))}
+function impBar(song,bar){return song.bars.filter(function(b){return b.bar===bar})[0]||{bar:bar,rh:[],lh:[]}}
+/* 一小節裡的音符，保留和弦結構：[[同時按的音…], …]
+   千萬不要在這裡把和弦攤平。原譜第 17 小節起旋律是八度雙音，
+   攤平後跟彈會變成「高八度→低八度」一顆一顆按，聽起來完全走樣。 */
+function impChords(song,bar,hand){const b=impBar(song,bar);return (b[hand]||[]).slice()}
+/* 一顆琴鍵一個小方塊。白鍵直接印編號；黑鍵在實體琴上沒有印數字，
+   所以標「夾住它的那兩個白鍵」，並用黑底對應手指要找的黑色鍵。 */
+function keyChip(note){return isBlack(note)
+  ? '<i class="kc blk">'+whiteNumber(note)+'–'+(whiteNumber(note)+1)+'</i>'
+  : '<i class="kc">'+whiteNumber(note)+'</i>'}
+/* 只彈白鍵的開關。要說清楚代價：整首移調了，聽起來會比原曲低（或高）一點 */
+function whiteToggle(kind){
+  const sh=state.white?whiteShift(kind):0;
+  return '<div class="white-toggle'+(state.white?' on':'')+'">'
+    +'<button data-action="white" data-kind="'+kind+'">'+(state.white?'✓ 只彈白鍵（新手模式）':'切換成只彈白鍵')+'</button>'
+    +'<small>'+(state.white
+      ? '已整首移調 '+(sh>0?'+':'')+sh+' 個半音，幾乎所有音都落在白鍵。旋律和原曲一樣，只是整體'+(sh<0?'低':'高')+'了一點點。'
+      : '黑鍵太多不好上手時，可以整首移調成幾乎全白鍵——同一首歌，只是換個高低。')
+    +'</small></div>'}
+/* 一個時間點一組。同時要按的鍵用 kc-stack 併在一起，
+   才看得出「這兩個是一起按」而不是「先後按」。 */
+function chipRow(chords){
+  if(!chords.length)return '<div class="kc-row"><i class="kc rest">休</i></div>';
+  return '<div class="kc-row">'+chords.map(function(ch){
+    return ch.length>1
+      ? '<span class="kc-stack">'+ch.map(keyChip).join('')+'</span>'
+      : keyChip(ch[0])}).join('')+'</div>'}
+/* 不管哪一首曲子，都用這個介面拿「某一小節要按哪些音」。
+   內建的一生所愛存的是簡譜級數，匯入曲目存的是音名，這裡統一轉成音名。 */
+function rawBarChords(kind,bar,hand){
+  if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));return s?impChords(s,bar,hand):[]}
+  if(kind==='life')return lifeSteps(bar).map(function(s){return [s.note]});
+  return []}
+
+/* ---------- 只彈白鍵模式 ----------
+   新手要先能彈完整首，黑鍵是門檻。做法不是把黑鍵音硬推到隔壁白鍵——那會
+   破壞旋律；而是「整首移調」。移調不改變任何音程關係，聽起來是同一首歌，
+   只是整體高低不同，卻可以讓幾乎所有音落在白鍵上。
+   例：B♭ 小調往下移一個半音就是 A 小調，鋼琴上唯一全白鍵的小調。 */
+function allNotesOf(kind){
+  const out=[];const total=kind==='life'?114:(impSong(kind.slice(4))||{totalBars:0}).totalBars;
+  for(let b=1;b<=total;b++)['rh','lh'].forEach(function(h){
+    rawBarChords(kind,b,h).forEach(function(ch){ch.forEach(function(n){if(n)out.push(n)})})});
+  return out}
+const _shiftCache={};
+function whiteShift(kind){
+  if(_shiftCache[kind]!==undefined)return _shiftCache[kind];
+  const ns=allNotesOf(kind);
+  let best=0,bestBlack=Infinity;
+  for(let t=-6;t<=6;t++){
+    let blk=0;
+    ns.forEach(function(n){if(isBlack(noteFromMidi(midi(n)+t)))blk++});
+    if(blk<bestBlack||(blk===bestBlack&&Math.abs(t)<Math.abs(best))){bestBlack=blk;best=t}}
+  return _shiftCache[kind]=best}
+function toWhite(note,shift){
+  let m=midi(note)+shift;
+  /* 移調後仍在黑鍵的（多半是臨時記號），吸附到下方白鍵 */
+  if(isBlack(noteFromMidi(m)))m-=1;
+  return noteFromMidi(m)}
+
+/* 這個曲目要不要移調成全白鍵？匯入曲目看它自己的設定，
+   一生所愛則沿用畫面上的開關。 */
+function isWhiteOnly(kind){
+  if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));return !!(s&&s.whiteOnly)}
+  return !!state.white}
+/* 入門模式：把「八度加厚」的旋律壓成單音，讓新手一次只按一個鍵。 */
+function isMelodyOnly(kind){
+  if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));return !!(s&&s.melodyOnly)}
+  return false}
+function topNote(chord){
+  let best=chord[0];
+  chord.forEach(function(n){if(midi(n)>midi(best))best=n});
+  return best}
+/* 這一疊音是不是「同一個音名、只差八度」？
+   八度加厚拿掉一個不會改變任何和聲，可以安全壓成單音；
+   但真正的和弦（不同音名）一旦只留最高音，和聲就整個消失——
+   原譜第 49–58 小節右手是重複的三音和弦伴奏，那樣簡化會變成
+   同一個音一直重複，聽起來完全不像這首曲子。 */
+function isOctaveStack(chord){
+  if(chord.length<2)return false;
+  const pc=midi(chord[0])%12;
+  return chord.every(function(n){return midi(n)%12===pc})}
+
+function barChords(kind,bar,hand){
+  let chords=rawBarChords(kind,bar,hand);
+  if(!chords.length)return chords;
+  if(isMelodyOnly(kind)&&hand==='rh')
+    /* 只壓縮八度加厚，真和弦原樣保留，否則和聲會不見 */
+    chords=chords.map(function(ch){return isOctaveStack(ch)?[topNote(ch)]:ch});
+  if(isWhiteOnly(kind)){
+    const sh=whiteShift(kind);
+    chords=chords.map(function(ch){return ch.map(function(n){return toWhite(n,sh)})})}
+  return chords}
+/* 攤平版：只給「這一小節用到哪些鍵」這類不在意同時性的地方用 */
+function barNotes(kind,bar,hand){
+  return barChords(kind,bar,hand).reduce(function(a,ch){return a.concat(ch)},[])}
+/* 這首曲子是不是每一小節都有音符？有的話目錄就改用琴鍵數字版面 */
+function hasBarNotes(kind){return kind.slice(0,4)==='imp:'||kind==='life'}
+function barTag(kind,n){
+  const c=barNotes(kind,n,state.hand).length;
+  return c?c+' 音':'逐小節練習'}
+
+function renderImported(){
+  const song=impCurrent();
+  if(!song)return '<section class="panel"><h2>找不到這首曲目</h2></section>';
+  const bar=Math.max(1,Math.min(song.totalBars,state.impBar));
+  /* 一律走 barChords，它會套用移調與單音簡化；直接呼叫 impChords 會繞過。
+     跟彈是按「時間點」推進，不是按單音——一個時間點可能要同時按好幾個鍵。 */
+  const kind='imp:'+song.id;
+  const chords=barChords(kind,bar,state.hand);
+  const notes=barNotes(kind,bar,state.hand);
+  const idx=chords.length?state.noteIndex%chords.length:0;
+  const cur=chords[idx]||[];
+  const other=state.hand==='rh'?'lh':'rh';
+  return measureCatalog(song.pages,bar,'imp:'+song.id,song.totalBars)
+    +scorePanel(song.pages,state.impPage,'imp:'+song.id,song.title+'　原譜')
+    +'<section class="panel"><div class="practice-box">'
+    +'<p class="eyebrow">逐小節跟彈 · 音符由 PDF 自動辨識</p>'
+    +'<h2>第 '+bar+' 小節<small style="font-weight:400;font-size:14px;opacity:.6"> ／ 全曲 '+song.totalBars+' 小節</small></h2>'
+    +'<div class="notice">大數字是 88 鍵電鋼琴的白鍵編號（白鍵 1–52，中央 C 是 24）。'
+    +(song.whiteOnly?'這一版整首都不用黑鍵。':'本曲調號：'+song.key+'（含黑鍵）')+'</div>'
+    +(song.melodyOnly
+      ? '<div class="white-toggle on"><b>入門版</b><small>整首已移調 '
+        +(whiteShift(kind)>0?'+':'')+whiteShift(kind)
+        +' 個半音全部落在白鍵。原譜中後段的旋律是八度加厚（同一個音高低各按一個），'
+        +'這一版只留上面那個音，旋律完全一樣但一次只按一個鍵。'
+        +'第 49–58 小節右手是三音和弦的伴奏，那裡照原樣保留——'
+        +'只留一個音的話和聲會不見，聽起來就不像這首歌了。</small></div>'
+      : song.whiteOnly
+      ? '<div class="white-toggle on"><b>純白鍵版</b><small>整首已移調 '
+        +(whiteShift(kind)>0?'+':'')+whiteShift(kind)
+        +' 個半音，全部落在白鍵上。旋律與原曲完全一樣，只是整體高低不同。'
+        +'中後段右手是八度雙音，格子裡框在一起的兩個數字要同時按。</small></div>'
+      : '<div class="white-toggle"><b>原調版</b><small>照原譜的調，會用到黑鍵，'
+        +'中後段右手還有八度雙音。剛開始覺得難，先從上面的單音入門版練起。</small></div>')
+    +'<div class="group-tabs two"><button class="'+(state.hand==='rh'?'on':'')+'" data-action="imp-hand" data-hand="rh"><small>先練這隻手</small><b>右手（旋律）</b></button>'
+    +'<button class="'+(state.hand==='lh'?'on':'')+'" data-action="imp-hand" data-hand="lh"><small>熟了再加</small><b>左手（伴奏）</b></button></div>'
+    +(chords.length
+      ? '<div class="current-note"><strong>'+cur.map(numberLabel).join('<i>+</i>')+'</strong>'
+        +'<div><b>請'+(cur.length>1?'同時按　':'按')+cur.map(keyLabel).join('　和　')+'</b>'
+        +'<small>第 '+(idx+1)+'／'+chords.length+' 拍 · 音名 '+cur.join(' + ')+'</small></div></div>'
+        +'<div class="flow">'+chords.map(function(ch,i){
+            return '<button class="'+(i===idx?'on':'')+'" data-action="imp-note" data-index="'+i+'">'
+              +'<b>'+ch.map(numberLabel).join('<i>+</i>')+'</b><small>'+ch.join('+')+'</small></button>'}).join('')+'</div>'
+      : '<div class="notice">這一小節在'+(state.hand==='rh'?'右':'左')+'手是休止，換另一隻手或跳到下一小節。</div>')
+    +'</div>'+keyboard(cur[0]||null,notes)
+    +'<div class="score-controls">'
+    +'<button data-action="imp-bar" data-bar="'+(bar-1)+'" '+(bar===1?'disabled':'')+'>← 上一小節</button>'
+    +'<button class="main" data-action="imp-listen">▶ 播放本小節</button>'
+    +'<button data-action="imp-bar" data-bar="'+(bar+1)+'" '+(bar===song.totalBars?'disabled':'')+'>下一小節 →</button></div>'
+    +'<div class="score-controls"><button data-action="imp-swap">切換到'+(other==='rh'?'右':'左')+'手</button>'
+    +'<button data-action="imp-listen-both">▶ 雙手一起播放</button></div></section>'}
+
+function impSelectBar(song,bar){
+  state.impBar=Math.max(1,Math.min(song.totalBars,bar));
+  state.impPage=pageForBar(song.pages,state.impBar);
+  state.noteIndex=0}
+
+function measureCatalog(pages,bar,kind,total){const keyMode=hasBarNotes(kind);return '<section class="panel catalog" id="catalog"><div class="catalog-head"><div><p class="eyebrow">完整練習目錄</p><h2>全曲 <em>'+total+' 個小節</em>，<br>一次全部列出。</h2><p>每個方格都能點選；點選後會同步到正確曲譜頁面。</p></div><div class="count"><b>'+total+'</b><span>／'+total+' 已列出</span><small>目前：第 '+bar+' 小節</small></div></div>'+pages.map(function(p,pi){let buttons='';for(let n=p.start;n<=p.end;n++){buttons+='<button class="'+(n===bar?'selected ':'')+(kind==='merry'&&n===1?'guided':'')+'" data-action="measure" data-kind="'+kind+'" data-bar="'+n+'">'
++(keyMode
+  /* 有音符資料的曲子直接把要按的琴鍵編號列出來，小節號退成小字——
+     照著數字按就能彈，不必先讀懂五線譜。 */
+  ? '<small class="kc-bar">第 '+n+' 小節 · P'+(pi+1)+'</small>'+chipRow(barChords(kind,n,state.hand))
+  : '<small>P'+(pi+1)+'</small><b>'+n+'</b><span>'+barTag(kind,n)+'</span>')
++'</button>'}return '<article class="page-block '+(bar>=p.start&&bar<=p.end?'active':'')+'"><div class="page-label"><div><small>第 '+(pi+1)+' 頁</small><b>'+p.title+'</b></div><span>小節 '+p.start+'–'+p.end+'</span></div><div class="measure-grid '+(keyMode?'keys':'')+'">'+buttons+'</div></article>'}).join('')+'<div class="sticky-choice"><div><small>你目前選擇</small><b>第 '+bar+' 小節 · 第 '+(pageForBar(pages,bar)+1)+' 頁</b></div><button data-action="scroll-score">查看對應曲譜 ↓</button></div></section>'}
+function lifeSteps(bar){return DATA.lifelongBars[bar-1].map(function(d){return{degree:d,note:DEGREE_NOTE[d]}})}
+function renderLife(){const steps=lifeSteps(state.lifeBar).map(function(s,i){return{degree:s.degree,note:barNotes('life',state.lifeBar,'rh')[i]||s.note}}),current=steps[state.noteIndex%steps.length];return measureCatalog(DATA.lifelongPages,state.lifeBar,"life",114)+scorePanel(DATA.lifelongPages,state.lifePage,"life","一生所愛完整原譜")+'<section class="panel"><div class="practice-box"><p class="eyebrow">逐小節數字練習</p><h2>第 '+state.lifeBar+' 小節</h2><div class="notice">大數字是 88 鍵電鋼琴的白鍵編號（白鍵 1–52，中央 C 是 24）。</div>'+whiteToggle('life')+'<div class="current-note"><strong>'+numberLabel(current.note)+'</strong><div><b>請按'+keyLabel(current.note)+'</b><small>簡譜 '+degreeLabel(current.degree)+' · 音名 '+current.note+'</small></div></div><div class="flow">'+steps.map(function(s,i){return '<button class="'+(i===state.noteIndex?'on':'')+'" data-action="life-note" data-index="'+i+'"><b>'+numberLabel(s.note)+'</b><small>'+degreeLabel(s.degree)+'</small></button>'}).join('')+'</div></div>'+keyboard(current.note,steps.map(function(s){return s.note}))+'<div class="score-controls"><button data-action="life-prev" '+(state.lifeBar===1?'disabled':'')+'>← 上一小節</button><button class="main" data-action="life-listen">▶ 播放本小節</button><button data-action="life-next" '+(state.lifeBar===114?'disabled':'')+'>下一小節 →</button></div></section>'}
+/* 匯入的曲目動態加進上方切換列（內建那兩首是寫死在 HTML 裡的） */
+function buildSongSwitch(){
+  const nav=document.querySelector('.song-switch');if(!nav)return;
+  nav.querySelectorAll('[data-imported]').forEach(function(b){b.remove()});
+  orderedSongs().forEach(function(s,i){
+    const full=impSong(s.id);if(!full)return;
+    const b=document.createElement('button');
+    b.dataset.song='imp:'+s.id;b.dataset.imported='1';
+    b.innerHTML='<small>'+String(i+1).padStart(2,'0')+' · '
+      +(full.melodyOnly?'只用白鍵 · 旋律單音 · 最好上手'
+        :full.whiteOnly?'只用白鍵 · 旋律含八度雙音'
+        :full.key+' · 含黑鍵')
+      +'　'+full.totalBars+' 小節</small><b>'+full.title+'</b>';
+    nav.insertBefore(b,nav.querySelector('[data-song="lifelong"]'))});
+  /* 一生所愛寫死在 HTML 裡，匯入的曲目插在它前面，所以編號要重算 */
+  const lf=nav.querySelector('[data-song="lifelong"] small');
+  if(lf)lf.textContent=String(IMPORTED_SONGS.length+1).padStart(2,'0')+' · 1＝G · 114 小節';}
+
+function render(){
+  document.querySelectorAll('[data-song]').forEach(function(b){b.classList.toggle('on',b.dataset.song===state.song)});
+  app.innerHTML=state.song.slice(0,4)==='imp:'?renderImported():renderLife();
+  save()}
+function selectMeasure(kind,bar){if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));if(s)impSelectBar(s,bar);render();return}state.lifeBar=Math.max(1,Math.min(114,bar));state.lifePage=pageForBar(DATA.lifelongPages,state.lifeBar);state.noteIndex=0;render()}
+document.addEventListener('click',function(event){const button=event.target.closest('button');if(!button)return;if(button.dataset.song){state.song=button.dataset.song;state.noteIndex=0;render();return}const action=button.dataset.action;if(!action)return;if(action==='measure')selectMeasure(button.dataset.kind,Number(button.dataset.bar));if(action==='page'){const kind=button.dataset.kind,index=Number(button.dataset.page);if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));if(s&&index>=0&&index<s.pages.length){state.impPage=index;state.impBar=s.pages[index].start;state.noteIndex=0}render();return}if(kind==='life'&&index>=0&&index<DATA.lifelongPages.length){state.lifePage=index;state.lifeBar=DATA.lifelongPages[index].start;state.noteIndex=0}render()}if(action==='scroll-score')document.getElementById('score').scrollIntoView({behavior:'smooth'});if(action==='zoom'){state.zoom=!state.zoom;render();document.getElementById('score').scrollIntoView()}if(action==='key'){playPiano(button.dataset.note)}if(action==='life-note'){state.noteIndex=Number(button.dataset.index);const s=lifeSteps(state.lifeBar)[state.noteIndex];playPiano(s.note);render()}if(action==='life-prev')selectMeasure('life',state.lifeBar-1);if(action==='life-next')selectMeasure('life',state.lifeBar+1);if(action==='life-listen'){const steps=lifeSteps(state.lifeBar);let i=0;function next(){if(i>=steps.length)return;playPiano(steps[i].note);i++;setTimeout(next,650)}next()}
+if(action==='white'){state.white=!state.white;state.noteIndex=0;render()}
+if(action==='imp-hand'){state.hand=button.dataset.hand;state.noteIndex=0;render()}
+if(action==='imp-swap'){state.hand=state.hand==='rh'?'lh':'rh';state.noteIndex=0;render()}
+if(action==='imp-note'){const s=impCurrent();if(s){state.noteIndex=Number(button.dataset.index);
+  (barChords('imp:'+s.id,state.impBar,state.hand)[state.noteIndex]||[]).forEach(function(n){playPiano(n)});render()}}
+if(action==='imp-bar'){const s=impCurrent();if(s){impSelectBar(s,Number(button.dataset.bar));render()}}
+/* 一次播一個「時間點」，該時間點的音同時發聲。逐音播放會把八度雙音
+   變成快速的八度跳躍，聽起來完全不像原曲。 */
+if(action==='imp-listen'){const s=impCurrent();if(s){const cs=barChords('imp:'+s.id,state.impBar,state.hand);const gap=Math.max(220,60000/state.bpm/2);let i=0;(function next(){if(i>=cs.length)return;cs[i].forEach(function(n){playPiano(n)});i++;setTimeout(next,gap)})()}}
+if(action==='imp-listen-both'){const s=impCurrent();if(s){const gap=Math.max(220,60000/state.bpm/2);
+  ['rh','lh'].forEach(function(h){const cs=barChords('imp:'+s.id,state.impBar,h);let i=0;(function next(){if(i>=cs.length)return;cs[i].forEach(function(n){playPiano(n)});i++;setTimeout(next,gap)})()})}}
+});
+document.addEventListener('input',function(event){if(event.target.dataset.action==='tempo'){state.bpm=Number(event.target.value);render()}});
+buildSongSwitch();
+render();
+</script>
+</body>
+</html>
