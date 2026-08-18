@@ -38,6 +38,26 @@
 .white-toggle button{padding:9px 16px;border:1px solid var(--ink);background:var(--paper);font:700 15px/1 inherit;cursor:pointer}
 .white-toggle.on button{background:var(--acid)}
 .white-toggle>b{font-size:16px}
+/* 雙手對照：兩手排在同一條時間軸上，直向對齊就看得出誰跟誰同時 */
+.two-hand{margin:14px 0}
+.th-now{padding:14px 16px;border:2px solid var(--ink);background:var(--acid)}
+.th-now small{display:block;margin-bottom:6px;font-size:12px;opacity:.7}
+.th-now b{display:block;font-size:19px;line-height:1.5}
+.th-rows{margin-top:10px;overflow-x:auto}
+.th-row{display:flex;align-items:stretch;gap:2px;margin-bottom:2px}
+.th-label{display:flex;align-items:center;min-width:44px;padding:0 6px;background:var(--ink);color:var(--white);font-size:12px;font-weight:700}
+.th-cell{flex:1;min-width:52px;padding:9px 4px;border:1px solid var(--line);background:var(--white);font:inherit;cursor:pointer}
+.th-cell.on{border-color:var(--ink);background:#f5f8e4;box-shadow:inset 0 0 0 2px var(--ink)}
+.th-new{font-weight:700;font-size:14px}
+.th-hold{font-size:14px;color:var(--muted);opacity:.55}
+.th-rest{color:var(--line)}
+.th-cell i{padding:0 1px;font-size:.7em;font-style:normal;opacity:.5}
+.th-tip{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.6}
+/* 手位建議 */
+.pos-hint{margin-top:10px;padding:12px 14px;border-left:4px solid var(--orange);background:#fdf3ef}
+.pos-hint.ok{border-left-color:#6b9b2f;background:#f2f7e8}
+.pos-hint b{display:block;font-size:15px}
+.pos-hint small{display:block;margin-top:5px;color:var(--muted);font-size:13px;line-height:1.65}
 .white-toggle small{display:block;margin-top:9px;color:var(--muted);font-size:13px;line-height:1.6}.lesson{background:#fff;border:1px solid var(--ink);box-shadow:8px 8px 0 var(--ink)}.lesson-head{display:flex;justify-content:space-between;gap:20px;padding:25px;border-bottom:1px solid var(--line)}.lesson-head h2{margin:4px 0;font:400 clamp(28px,4vw,44px) Georgia}.badge{padding:10px;background:var(--orange);font-size:11px;font-weight:900;text-align:center}.note-stage{padding:25px}.current-note{display:flex;align-items:center;gap:20px;margin:20px 0}.current-note>strong{display:grid;place-items:center;width:100px;height:100px;border-radius:50%;background:var(--orange);font-size:34px}.current-note b,.current-note small{display:block}.current-note b{font-size:20px}.current-note small{margin-top:6px;color:var(--muted)}.note-strip{display:flex;overflow:auto}.note-strip button{min-width:74px;height:64px;border:1px solid var(--line);background:#f5f3ed}.note-strip button.now{background:var(--acid);transform:translateY(-4px)}.note-strip button b,.note-strip button small{display:block}.piano-wrap{margin:16px 25px 25px;overflow-x:auto}.range-label{margin-bottom:8px;color:var(--muted);font-size:10px;letter-spacing:.08em}.piano-scroll{overflow-x:auto}.piano{position:relative;display:flex;width:1664px;height:170px;border:2px solid var(--ink);background:#111}.white-key{position:relative;flex:1;border:0;border-right:1px solid #777;background:#fbfaf5}.white-key span{position:absolute;right:0;bottom:9px;left:0}.white-key b,.white-key small{display:block}.white-key small{font-size:8px;color:#777}.white-key.active{background:var(--acid)}
 /* 這一小節等一下會用到的鍵，先淡淡標起來，眼睛才知道手該擺哪 */
 .white-key.inbar{background:#e8edd0}
@@ -66,7 +86,7 @@ const DATA={"lifelongPages":[{"src":"","start":1,"end":41,"title":"前奏與主�
    要移除某一首：python3 inject_song.py --remove <曲目代號>
    要全部清空：把下面那行的中括號內容刪成空陣列
    ==================================================================================================== */
-const IMPORTED_SONGS=[{"id":"mcml","title":"Merry Christmas, Mr. Lawrence","composer":"Merry Christmas, Mr. Lawrence - Ryuichi Sakamoto (Piano Solo)","key":"D♭大調 / B♭小調","totalBars":75,"pages":[{"index":0,"start":1,"end":16,"title":"第 1 頁","src":""},{"index":1,"start":17,"end":33,"title":"第 2 頁","src":""},{"index":2,"start":34,"end":53,"title":"第 3 頁","src":""},{"index":3,"start":54,"end":75,"title":"第 4 頁","src":""}],"bars":[{"bar":1,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]]},{"bar":2,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["Gb3","F4","Db4","Bb3"]]},{"bar":3,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["F4","C4","Ab3"]]},{"bar":4,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["F4","C4","Ab3"]]},{"bar":5,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":6,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":7,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":8,"page":0,"rh":[["C5"],["Bb4"],["C5"],["F5"],["C5"],["Bb4"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":9,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]]},{"bar":10,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]]},{"bar":11,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["F4","C4","Ab3"]]},{"bar":12,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["C4","Ab3","F4"]]},{"bar":13,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["C6"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":14,"page":0,"rh":[["Ab5"],["Eb5"],["Db5"],["C6"],["Eb5"],["Db5"]],"lh":[["Db4"],["Eb4","Ab3","F3"]]},{"bar":15,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["C6"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":16,"page":0,"rh":[["Ab5"],["Eb5"],["Db5"],["C6"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]]},{"bar":17,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":18,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":19,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":20,"page":1,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":21,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":22,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":23,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]]},{"bar":24,"page":1,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":25,"page":1,"rh":[],"lh":[["Bb3","Bb2"],["C3"],["Db3"]]},{"bar":26,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Gb4","Eb4","C4"],["Bb4"],["Bb4","Gb4","Eb4","C4"]],"lh":[["Ab2"]]},{"bar":27,"page":1,"rh":[["Gb4","Eb4","C4","Bb4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Bb4"],["Ab4"],["Gb4"]],"lh":[["Ab2"]]},{"bar":28,"page":1,"rh":[["F4","Db4","Bb3","Gb3"],["Eb4"],["F4"],["Eb4"],["Eb4"],["Db4","Bb3","Gb3"],["F4"],["F4","Db4","Bb3","Gb3"]],"lh":[["Eb2"]]},{"bar":29,"page":1,"rh":[["Db4","Bb3","Gb3","F4"],["Eb4"],["F4"],["Eb4"],["Eb4"],["Eb4"],["F4"],["Gb4"]],"lh":[["Eb2"]]},{"bar":30,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Gb4","Eb4","C4"],["Bb4"],["Bb4","Gb4","Eb4","C4"]],"lh":[["Ab2"]]},{"bar":31,"page":1,"rh":[["Gb4","Eb4","C4","Bb4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Bb4"],["Ab4"],["Gb4"]],"lh":[["Ab2"]]},{"bar":32,"page":1,"rh":[["Bb3","G3","F4"],["Eb4"],["F4"],["Bb4"],["Bb4"],["F4"],["F4"]],"lh":[["Eb2"]]},{"bar":33,"page":1,"rh":[["C4","A3","F4"],["Eb4"],["F4"],["A4"],["A4"]],"lh":[["F2"]]},{"bar":34,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":35,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":36,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":37,"page":2,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":38,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":39,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb5","Eb6"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":40,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]]},{"bar":41,"page":2,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":42,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":43,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":44,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":45,"page":2,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":46,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":47,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Gb3","Gb2"]]},{"bar":48,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"],["Db5"]],"lh":[["F3","F2"],["Eb3","Eb2"]]},{"bar":49,"page":2,"rh":[["Bb4","Eb4","C4"],["Ab4"],["Ab4","Eb4","C4"],["F4"]],"lh":[["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":50,"page":2,"rh":[["F5","Db5","Bb4","Gb4"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"]],"lh":[["Gb2"]]},{"bar":51,"page":2,"rh":[["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"]],"lh":[["Gb2"]]},{"bar":52,"page":2,"rh":[["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"]],"lh":[["F2"]]},{"bar":53,"page":2,"rh":[["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"]],"lh":[["F2"]]},{"bar":54,"page":3,"rh":[["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"]],"lh":[["Gb2"]]},{"bar":55,"page":3,"rh":[["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["F4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"],["Eb4","Bb3"],["C4"]],"lh":[["Gb2"]]},{"bar":56,"page":3,"rh":[["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Db4","Ab3"],["Eb4"],["Ab3","Db4"],["Eb4"]],"lh":[["F2"]]},{"bar":57,"page":3,"rh":[["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Eb4","Ab3"],["Eb4","Ab3"]],"lh":[["F2"]]},{"bar":58,"page":3,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":59,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":60,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":61,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":62,"page":3,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":63,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":64,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":65,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]]},{"bar":66,"page":3,"rh":[["Eb5"],["F5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]]},{"bar":67,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":68,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]]},{"bar":69,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]]},{"bar":70,"page":3,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":71,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]]},{"bar":72,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Gb3","Gb2"]]},{"bar":73,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"],["Db5"]],"lh":[["F3","F2"],["Eb3","Eb2"]]},{"bar":74,"page":3,"rh":[["Bb4","Eb4","C4"],["Ab4"],["Ab4","Eb4","C4"],["F4"]],"lh":[["Ab3","Ab2"],["Ab3","Ab2"]]},{"bar":75,"page":3,"rh":[["F4","Db4","Bb3","Gb3"]],"lh":[["Gb2","Gb1"]]}]},{"id":"mcml-white","derivedFrom":"mcml","whiteOnly":true,"title":"Merry Christmas, Mr. Lawrence（只用白鍵）"},{"id":"mcml-easy","derivedFrom":"mcml","whiteOnly":true,"melodyOnly":true,"title":"Merry Christmas, Mr. Lawrence（只用白鍵 · 單音入門）"}];
+const IMPORTED_SONGS=[{"id":"mcml","title":"Merry Christmas, Mr. Lawrence","composer":"Merry Christmas, Mr. Lawrence - Ryuichi Sakamoto (Piano Solo)","key":"D♭大調 / B♭小調","totalBars":75,"pages":[{"index":0,"start":1,"end":16,"title":"第 1 頁","src":""},{"index":1,"start":17,"end":33,"title":"第 2 頁","src":""},{"index":2,"start":34,"end":53,"title":"第 3 頁","src":""},{"index":3,"start":54,"end":75,"title":"第 4 頁","src":""}],"bars":[{"bar":1,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]],"rt":[0.4009,0.5003,0.5998,0.6993,0.7987,0.8982],"lt":[0.4009]},{"bar":2,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]],"rt":[0.0596,0.2158,0.3718,0.5279,0.684,0.8401],"lt":[0.0597]},{"bar":3,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["F4","Eb4","C4","Ab3"]],"rt":[0.1065,0.255,0.4033,0.5517,0.7002,0.8485],"lt":[0.1065]},{"bar":4,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["F4","Eb4","C4","Ab3"]],"rt":[0.107,0.2552,0.4036,0.5518,0.7001,0.8484],"lt":[0.107]},{"bar":5,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["Eb4","Db4","Ab3","F3"]],"rt":[0.3576,0.4644,0.5711,0.6778,0.7845,0.8913],"lt":[0.3576]},{"bar":6,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["Eb4","Db4","Ab3","F3"]],"rt":[0.1013,0.2506,0.3998,0.5491,0.6983,0.8476],"lt":[0.1013]},{"bar":7,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["Ab5"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]],"rt":[0.101,0.2504,0.3998,0.5492,0.6985,0.8478],"lt":[0.0538,0.101]},{"bar":8,"page":0,"rh":[["C5"],["Bb4"],["C5"],["F5"],["C5"],["Bb4"]],"lh":[["C4"],["F4","Db4","Bb3"]],"rt":[0.1013,0.2506,0.3998,0.5491,0.6983,0.8476],"lt":[0.0542,0.1014]},{"bar":9,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]],"rt":[0.3436,0.4527,0.5617,0.6708,0.7799,0.8889],"lt":[0.3436]},{"bar":10,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Bb5"],["F5"],["Eb5"]],"lh":[["F4","Db4","Bb3","Gb3"]],"rt":[0.0559,0.2127,0.3694,0.5263,0.683,0.8398],"lt":[0.0559]},{"bar":11,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["F4","Eb4","C4","Ab3"]],"rt":[0.0991,0.2488,0.3984,0.548,0.6976,0.8472],"lt":[0.0991]},{"bar":12,"page":0,"rh":[["F5"],["Eb5"],["F5"],["Ab5"],["F5"],["Eb5"]],"lh":[["Eb4"],["F4","C4","Ab3"]],"rt":[0.0992,0.2489,0.3984,0.5481,0.6977,0.8473],"lt":[0.0528,0.0993]},{"bar":13,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["C6"],["Eb5"],["Db5"]],"lh":[["Eb4","Db4","Ab3","F3"]],"rt":[0.3776,0.481,0.5844,0.6878,0.7912,0.8946],"lt":[0.3776]},{"bar":14,"page":0,"rh":[["Ab5"],["Eb5"],["Db5"],["C6"],["Eb5"],["Db5"]],"lh":[["Eb4","Db4","Ab3","F3"]],"rt":[0.1096,0.2575,0.4054,0.5532,0.7011,0.849],"lt":[0.1096]},{"bar":15,"page":0,"rh":[["Eb5"],["Db5"],["Eb5"],["C6"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]],"rt":[0.1093,0.2572,0.405,0.5529,0.7008,0.8486],"lt":[0.0583,0.1093]},{"bar":16,"page":0,"rh":[["Ab5"],["Eb5"],["Db5"],["C6"],["Eb5"],["Db5"]],"lh":[["C4"],["F4","Db4","Bb3"]],"rt":[0.1026,0.2419,0.3811,0.5203,0.6595,0.7987],"lt":[0.0547,0.1026]},{"bar":17,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.088,0.2091,0.3303,0.4514,0.5726],"lt":[0.0842]},{"bar":18,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2464,0.3714,0.4965,0.6216,0.7467,0.8718],"lt":[0.0549]},{"bar":19,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]],"rt":[0.059,0.1841,0.3091,0.4342,0.5593],"lt":[0.0551]},{"bar":20,"page":1,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]],"rt":[0.2788,0.4941,0.6375,0.781],"lt":[0.0636,0.2788,0.4941,0.781]},{"bar":21,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.3622,0.447,0.5317,0.6165,0.7013],"lt":[0.3594]},{"bar":22,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2508,0.3752,0.4995,0.6239,0.7482,0.8725],"lt":[0.0601]},{"bar":23,"page":1,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]],"rt":[0.0643,0.1886,0.313,0.4374,0.5617],"lt":[0.0601]},{"bar":24,"page":1,"rh":[["F5","Eb5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]],"rt":[0.4944],"lt":[0.0875,0.4944]},{"bar":25,"page":1,"rh":[],"lh":[["Bb3","Bb2"],["C3"],["Db3"]],"rt":[],"lt":[0.0929,0.4796,0.7374]},{"bar":26,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4","Gb4","Eb4","C4"],["Bb4"],["Bb4","Gb4","Eb4","C4"]],"lh":[["Ab2"]],"rt":[0.3466,0.4266,0.5066,0.5866,0.6666,0.7466,0.9066],"lt":[0.344]},{"bar":27,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Bb4"],["Ab4"],["Gb4"]],"lh":[["Ab2"]],"rt":[0.0592,0.1764,0.2936,0.4109,0.5281,0.6453,0.7626,0.8798],"lt":[0.0553]},{"bar":28,"page":1,"rh":[["F4","Db4","Bb3","Gb3"],["Eb4"],["F4"],["Eb4"],["Eb4","Db4","Bb3","Gb3"],["F4"],["F4","Db4","Bb3","Gb3"]],"lh":[["Eb2"]],"rt":[0.058,0.1734,0.2886,0.404,0.5192,0.6345,0.8651],"lt":[0.0542]},{"bar":29,"page":1,"rh":[["F4","Db4","Bb3","Gb3"],["Eb4"],["F4"],["Eb4"],["Eb4"],["Eb4"],["F4"],["Gb4"]],"lh":[["Eb2"]],"rt":[0.0588,0.176,0.2933,0.4105,0.5278,0.645,0.7623,0.8795],"lt":[0.055]},{"bar":30,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4","Gb4","Eb4","C4"],["Bb4"],["Bb4","Gb4","Eb4","C4"]],"lh":[["Ab2"]],"rt":[0.3354,0.4174,0.4993,0.5813,0.6633,0.7453,0.9092],"lt":[0.3329]},{"bar":31,"page":1,"rh":[["Bb4","Gb4","Eb4","C4"],["Ab4"],["Bb4"],["Ab4"],["Ab4"],["Bb4"],["Ab4"],["Gb4"]],"lh":[["Ab2"]],"rt":[0.0555,0.1732,0.2909,0.4087,0.5264,0.6441,0.7619,0.8796],"lt":[0.0518]},{"bar":32,"page":1,"rh":[["F4","Bb3","G3"],["Eb4"],["F4"],["Bb4"],["Bb4"],["F4"],["F4"]],"lh":[["Eb2"]],"rt":[0.0812,0.202,0.3228,0.4435,0.5643,0.6851,0.8662],"lt":[0.0776]},{"bar":33,"page":1,"rh":[["F4","C4","A3"],["Eb4"],["F4"],["A4"],["A4"]],"lh":[["F2"]],"rt":[0.0938,0.2342,0.3746,0.515,0.6555],"lt":[0.0895]},{"bar":34,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.3306,0.4196,0.5085,0.5975,0.6864],"lt":[0.3281]},{"bar":35,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2442,0.3697,0.4952,0.6207,0.7462,0.8717],"lt":[0.0523]},{"bar":36,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]],"rt":[0.0563,0.1817,0.3071,0.4325,0.5579],"lt":[0.0526]},{"bar":37,"page":2,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]],"rt":[0.276,0.4922,0.6362,0.7803],"lt":[0.06,0.276,0.4922,0.7803]},{"bar":38,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.315,0.4061,0.4971,0.5881,0.6791],"lt":[0.3126]},{"bar":39,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2411,0.3671,0.4931,0.6191,0.745,0.871],"lt":[0.0487]},{"bar":40,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]],"rt":[0.0523,0.1782,0.3042,0.4302,0.5562],"lt":[0.0489]},{"bar":41,"page":2,"rh":[["F5","Eb5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]],"rt":[0.5372],"lt":[0.0792,0.5372]},{"bar":42,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.3306,0.4196,0.5085,0.5975,0.6864],"lt":[0.3281]},{"bar":43,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2442,0.3697,0.4952,0.6207,0.7462,0.8717],"lt":[0.0523]},{"bar":44,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]],"rt":[0.0563,0.1817,0.3071,0.4325,0.5578],"lt":[0.0526]},{"bar":45,"page":2,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]],"rt":[0.276,0.4922,0.6362,0.7803],"lt":[0.0599,0.276,0.4922,0.7803]},{"bar":46,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.3262,0.4158,0.5054,0.595,0.6845],"lt":[0.3236]},{"bar":47,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Gb3","Gb2"]],"rt":[0.2546,0.3783,0.5022,0.626,0.7498,0.8736],"lt":[0.0654]},{"bar":48,"page":2,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"],["Db5"]],"lh":[["F3","F2"],["Eb3","Eb2"]],"rt":[0.0555,0.1919,0.3283,0.4647,0.6011,0.8605],"lt":[0.0555,0.6011]},{"bar":49,"page":2,"rh":[["Bb4","Eb4","C4"],["Ab4"],["Ab4","Eb4","C4"],["F4"]],"lh":[["Ab3","Ab2"],["Ab3","Ab2"]],"rt":[0.0626,0.3553,0.5093,0.7403],"lt":[0.0626,0.5093]},{"bar":50,"page":2,"rh":[["F5","Db5","Bb4","Gb4"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"]],"lh":[["Gb2"]],"rt":[0.3732,0.4999,0.5824,0.6649,0.7474,0.8299,0.9124],"lt":[0.3732]},{"bar":51,"page":2,"rh":[["F4","C4","Bb3"],["F4","C4","Bb3"],["F4","C4","Bb3"],["F4","C4","Bb3"],["Eb4","C4","Bb3"],["Eb4","C4","Bb3"],["Eb4","C4","Bb3"],["Eb4","C4","Bb3"]],"lh":[["Gb2"]],"rt":[0.0498,0.1657,0.2817,0.3977,0.5136,0.6296,0.7456,0.8615],"lt":[0.0465]},{"bar":52,"page":2,"rh":[["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"]],"lh":[["F2"]],"rt":[0.101,0.2139,0.3269,0.4398,0.5528,0.6658,0.7787,0.8917],"lt":[0.052]},{"bar":53,"page":2,"rh":[["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"]],"lh":[["F2"]],"rt":[0.0628,0.1791,0.2953,0.4116,0.5279,0.6442,0.7605,0.8768],"lt":[0.0587]},{"bar":54,"page":3,"rh":[["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"],["F4","Db4","Bb3"]],"lh":[["Gb2"]],"rt":[0.3681,0.4461,0.524,0.6019,0.6799,0.7578,0.8357,0.9136],"lt":[0.3653]},{"bar":55,"page":3,"rh":[["F4","C4","Bb3"],["F4","C4","Bb3"],["F4","C4","Bb3"],["F4","C4","Bb3"],["Eb4","C4","Bb3"],["Eb4","C4","Bb3"],["Eb4","C4","Bb3"],["Eb4","C4","Bb3"]],"lh":[["Gb2"]],"rt":[0.0502,0.1661,0.282,0.3979,0.5138,0.6297,0.7456,0.8615],"lt":[0.0469]},{"bar":56,"page":3,"rh":[["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"],["Eb4","Db4","Ab3"]],"lh":[["F2"]],"rt":[0.1008,0.2139,0.3269,0.44,0.553,0.666,0.7791,0.8921],"lt":[0.0519]},{"bar":57,"page":3,"rh":[["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Db4","Ab3"],["Eb4","Ab3"],["Eb4","Ab3"]],"lh":[["F2"]],"rt":[0.0643,0.1767,0.2891,0.4015,0.5139,0.6263,0.7387,0.8511],"lt":[0.0601]},{"bar":58,"page":3,"rh":[["F5","Eb5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]],"rt":[0.7581],"lt":[0.5197,0.7581]},{"bar":59,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.0726,0.1957,0.3189,0.442,0.5651],"lt":[0.0678]},{"bar":60,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2537,0.375,0.4964,0.6177,0.739,0.8603],"lt":[0.067]},{"bar":61,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]],"rt":[0.0729,0.196,0.3192,0.4423,0.5655],"lt":[0.0682]},{"bar":62,"page":3,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]],"rt":[0.29,0.5016,0.6427,0.7838],"lt":[0.0782,0.29,0.5016,0.7838]},{"bar":63,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.315,0.4061,0.4971,0.5881,0.6791],"lt":[0.3126]},{"bar":64,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2411,0.3671,0.4931,0.6191,0.745,0.871],"lt":[0.0487]},{"bar":65,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"]],"lh":[["Bb3","Bb2"]],"rt":[0.0523,0.1782,0.3042,0.4302,0.5562],"lt":[0.0489]},{"bar":66,"page":3,"rh":[["F5","Eb5","C5","Ab4"]],"lh":[["Bb3","Bb2"],["Ab3","Ab2"]],"rt":[0.5372],"lt":[0.0792,0.5372]},{"bar":67,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.3306,0.4196,0.5085,0.5975,0.6864],"lt":[0.3281]},{"bar":68,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Ab3","Ab2"]],"rt":[0.2442,0.3697,0.4952,0.6207,0.7462,0.8717],"lt":[0.0523]},{"bar":69,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Db6","Db5"]],"lh":[["Bb3","Bb2"]],"rt":[0.0563,0.1817,0.3071,0.4325,0.5579],"lt":[0.0526]},{"bar":70,"page":3,"rh":[["Db6","Db5"],["C6","C5"],["Ab5","Ab4"],["F5","F4"]],"lh":[["Bb3","Bb2"],["Bb3","Bb2"],["Ab3","Ab2"],["Ab3","Ab2"]],"rt":[0.276,0.4922,0.6362,0.7803],"lt":[0.06,0.2761,0.4922,0.7803]},{"bar":71,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Bb5","Bb4"],["Eb6","Eb5"]],"lh":[["Gb3","Gb2"]],"rt":[0.3578,0.4431,0.5284,0.6137,0.699],"lt":[0.355]},{"bar":72,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["F6","F5"],["Ab6","Ab5"],["F6","F5"]],"lh":[["Gb3","Gb2"]],"rt":[0.2618,0.3844,0.5069,0.6294,0.7519,0.8744],"lt":[0.0741]},{"bar":73,"page":3,"rh":[["Eb6","Eb5"],["F6","F5"],["Eb6","Eb5"],["Db6","Db5"],["Bb5","Bb4"],["Db5"]],"lh":[["F3","F2"],["Eb3","Eb2"]],"rt":[0.0633,0.1985,0.3337,0.4689,0.6041,0.8611],"lt":[0.0633,0.6041]},{"bar":74,"page":3,"rh":[["Bb4","Eb4","C4"],["Ab4"],["Ab4","Eb4","C4"],["F4"]],"lh":[["Ab3","Ab2"],["Ab3","Ab2"]],"rt":[0.0729,0.3703,0.5267,0.7613],"lt":[0.0729,0.5267]},{"bar":75,"page":3,"rh":[["F4","Db4","Bb3","Gb3"]],"lh":[["Gb2","Gb1"]],"rt":[0.157],"lt":[0.157]}]},{"id":"mcml-white","derivedFrom":"mcml","whiteOnly":true,"title":"Merry Christmas, Mr. Lawrence（只用白鍵）"},{"id":"mcml-easy","derivedFrom":"mcml","whiteOnly":true,"melodyOnly":true,"title":"Merry Christmas, Mr. Lawrence（只用白鍵 · 入門）"}];
 /* ==================== END IMPORTED SONGS ==================== */
 
 const DEGREE_NOTE={l5:"D4",l6:"E4",l7:"F#4","1":"G4","2":"A4","3":"B4","4":"C5","5":"D5","6":"E5","7":"F#5",h1:"G5",h2:"A5",h3:"B5"};
@@ -150,6 +170,34 @@ function impBar(song,bar){return song.bars.filter(function(b){return b.bar===bar
    千萬不要在這裡把和弦攤平。原譜第 17 小節起旋律是八度雙音，
    攤平後跟彈會變成「高八度→低八度」一顆一顆按，聽起來完全走樣。 */
 function impChords(song,bar,hand){const b=impBar(song,bar);return (b[hand]||[]).slice()}
+function impTimes(song,bar,hand){const b=impBar(song,bar);return (b[hand==='rh'?'rt':'lt']||[]).slice()}
+
+/* 雙手對照：把左右手排到同一條時間軸上。
+   兩手的拍數常常不同（右手八個八分音符、左手一個全音符），所以是以
+   右手每一拍為準，去找左手在那個時刻「正按著」哪個和弦——也就是
+   時間點在它之前、最靠近的那一個。左手按下去後會一直持續，
+   不是每次右手動它就要重按。 */
+function twoHandSteps(kind,bar){
+  const s=impSong(kind.slice(4));
+  if(!s)return [];
+  const rh=barChords(kind,bar,'rh'), lh=barChords(kind,bar,'lh');
+  const rt=impTimes(s,bar,'rh'), lt=impTimes(s,bar,'lh');
+  const lead=rh.length?'rh':'lh';
+  const steps=[];
+  const primary=lead==='rh'?rh:lh, ptimes=lead==='rh'?rt:lt;
+  primary.forEach(function(ch,i){
+    const t=ptimes[i]!==undefined?ptimes[i]:i/Math.max(1,primary.length);
+    let other=null, otherIdx=-1, isNew=false;
+    const oc=lead==='rh'?lh:rh, ot=lead==='rh'?lt:rt;
+    for(let k=0;k<oc.length;k++){
+      const kt=ot[k]!==undefined?ot[k]:k/Math.max(1,oc.length);
+      if(kt<=t+0.02){other=oc[k];otherIdx=k;isNew=Math.abs(kt-t)<=0.02}
+    }
+    steps.push(lead==='rh'
+      ? {rh:ch, lh:other, lhNew:isNew, t:t}
+      : {rh:other, lh:ch, rhNew:isNew, t:t});
+  });
+  return steps}
 /* 一顆琴鍵一個小方塊。白鍵直接印編號；黑鍵在實體琴上沒有印數字，
    所以標「夾住它的那兩個白鍵」，並用黑底對應手指要找的黑色鍵。 */
 function keyChip(note){return isBlack(note)
@@ -280,9 +328,11 @@ function renderImported(){
         +'中後段右手是八度雙音，格子裡框在一起的兩個數字要同時按。</small></div>'
       : '<div class="white-toggle"><b>原調版</b><small>照原譜的調，會用到黑鍵，'
         +'中後段右手還有八度雙音。剛開始覺得難，先從上面的單音入門版練起。</small></div>')
-    +'<div class="group-tabs two"><button class="'+(state.hand==='rh'?'on':'')+'" data-action="imp-hand" data-hand="rh"><small>先練這隻手</small><b>右手（旋律）</b></button>'
-    +'<button class="'+(state.hand==='lh'?'on':'')+'" data-action="imp-hand" data-hand="lh"><small>熟了再加</small><b>左手（伴奏）</b></button></div>'
-    +(chords.length
+    +'<div class="group-tabs"><button class="'+(state.hand==='rh'?'on':'')+'" data-action="imp-hand" data-hand="rh"><small>① 先練這隻手</small><b>右手（旋律）</b></button>'
+    +'<button class="'+(state.hand==='lh'?'on':'')+'" data-action="imp-hand" data-hand="lh"><small>② 熟了再單獨練</small><b>左手（伴奏）</b></button>'
+    +'<button class="'+(state.hand==='both'?'on':'')+'" data-action="imp-hand" data-hand="both"><small>③ 兩手都會了再合</small><b>雙手合起來</b></button></div>'
+    +(state.hand==='both' ? twoHandPanel(kind,bar) :
+      chords.length
       ? '<div class="current-note"><strong>'+cur.map(numberLabel).join('<i>+</i>')+'</strong>'
         +'<div><b>請'+(cur.length>1?'同時按　':'按')+cur.map(keyLabel).join('　和　')+'</b>'
         +'<small>第 '+(idx+1)+'／'+chords.length+' 拍 · 音名 '+cur.join(' + ')+'</small></div></div>'
@@ -290,13 +340,72 @@ function renderImported(){
             return '<button class="'+(i===idx?'on':'')+'" data-action="imp-note" data-index="'+i+'">'
               +'<b>'+ch.map(numberLabel).join('<i>+</i>')+'</b><small>'+ch.join('+')+'</small></button>'}).join('')+'</div>'
       : '<div class="notice">這一小節在'+(state.hand==='rh'?'右':'左')+'手是休止，換另一隻手或跳到下一小節。</div>')
-    +'</div>'+keyboard(cur[0]||null,notes)
+    +(state.hand!=='both'&&chords.length?handHint(notes,state.hand):'')
+    +'</div>'+keyboard(
+        state.hand==='both'
+          ? (function(){const s=twoHandSteps(kind,bar)[state.noteIndex%Math.max(1,twoHandSteps(kind,bar).length)];
+             return s?[].concat(s.rh||[],s.lh||[]):null})()
+          : (cur[0]||null),
+        state.hand==='both'
+          ? barNotes(kind,bar,'rh').concat(barNotes(kind,bar,'lh'))
+          : notes)
     +'<div class="score-controls">'
     +'<button data-action="imp-bar" data-bar="'+(bar-1)+'" '+(bar===1?'disabled':'')+'>← 上一小節</button>'
     +'<button class="main" data-action="imp-listen">▶ 播放本小節</button>'
     +'<button data-action="imp-bar" data-bar="'+(bar+1)+'" '+(bar===song.totalBars?'disabled':'')+'>下一小節 →</button></div>'
     +'<div class="score-controls"><button data-action="imp-swap">切換到'+(other==='rh'?'右':'左')+'手</button>'
     +'<button data-action="imp-listen-both">▶ 雙手一起播放</button></div></section>'}
+
+/* ---------- 手位建議 ----------
+   手張開一次大約只能舒服覆蓋五個白鍵（五指位置）。右手拇指在最低音那端、
+   左手拇指在最高音那端，所以兩手的「拇指該放哪」是相反方向算的。
+   跨度超過五個白鍵就沒辦法一個手位彈完，必須換手位或用跨指。 */
+function handPosition(notes,hand){
+  const ws=notes.filter(Boolean).map(whiteNumber);
+  if(!ws.length)return null;
+  const lo=Math.min.apply(null,ws), hi=Math.max.apply(null,ws);
+  const span=hi-lo+1;
+  return {lo:lo, hi:hi, span:span, thumb:hand==='lh'?hi:lo, oneShape:span<=5}}
+
+function handHint(notes,hand){
+  const p=handPosition(notes,hand);
+  if(!p)return '';
+  const name=hand==='lh'?'左手':'右手';
+  const dir=hand==='lh'?'往左（低音方向）':'往右（高音方向）';
+  return '<div class="pos-hint'+(p.oneShape?' ok':'')+'">'
+    +'<b>'+name+'拇指放白鍵 '+p.thumb+' 號</b>'
+    +'<small>'+(p.oneShape
+      ? '其餘手指'+dir+'依序擺好，這一小節跨 '+p.span+' 個白鍵（'+p.lo+'–'+p.hi+'），手不用移動就彈得完。'
+      : '這一小節跨 '+p.span+' 個白鍵（'+p.lo+'–'+p.hi+'），超過一個手位，中途要移動手或用拇指穿過。'
+        +'先把手放在 '+p.thumb+' 號，彈到構不到的地方再移。')
+    +'</small></div>'}
+
+/* 雙手對照面板：把兩手排在同一條時間軸上逐拍列出 */
+function twoHandPanel(kind,bar){
+  const steps=twoHandSteps(kind,bar);
+  if(!steps.length)return '<div class="notice">這一小節兩手都是休止。</div>';
+  const rhAll=barNotes(kind,bar,'rh'), lhAll=barNotes(kind,bar,'lh');
+  const idx=state.noteIndex%steps.length;
+  const st=steps[idx];
+  const cell=function(ch,fresh){
+    if(!ch||!ch.length)return '<span class="th-rest">—</span>';
+    return '<span class="'+(fresh?'th-new':'th-hold')+'">'
+      +ch.map(numberLabel).join('<i>+</i>')+'</span>'};
+  return '<div class="two-hand">'
+    +'<div class="th-now"><div><small>第 '+(idx+1)+'／'+steps.length+' 拍</small>'
+    +'<b>右手 '+(st.rh&&st.rh.length?st.rh.map(numberLabel).join(' + '):'不用動')+'</b>'
+    +'<b>左手 '+(st.lh&&st.lh.length?st.lh.map(numberLabel).join(' + '):'不用動')+'</b></div></div>'
+    +'<div class="th-rows">'
+    +'<div class="th-row"><span class="th-label">右手</span>'
+      +steps.map(function(s,i){return '<button class="th-cell '+(i===idx?'on':'')
+        +'" data-action="imp-note" data-index="'+i+'">'+cell(s.rh,s.rhNew!==false)+'</button>'}).join('')+'</div>'
+    +'<div class="th-row"><span class="th-label">左手</span>'
+      +steps.map(function(s,i){return '<button class="th-cell '+(i===idx?'on':'')
+        +'" data-action="imp-note" data-index="'+i+'">'+cell(s.lh,s.lhNew)+'</button>'}).join('')+'</div>'
+    +'</div>'
+    +'<p class="th-tip">淡色＝那隻手還按著上一個和弦，不用重按；「—」＝那一拍沒有音。</p>'
+    +handHint(rhAll,'rh')+handHint(lhAll,'lh')
+    +'</div>'}
 
 function impSelectBar(song,bar){
   state.impBar=Math.max(1,Math.min(song.totalBars,bar));
@@ -340,11 +449,24 @@ if(action==='white'){state.white=!state.white;state.noteIndex=0;render()}
 if(action==='imp-hand'){state.hand=button.dataset.hand;state.noteIndex=0;render()}
 if(action==='imp-swap'){state.hand=state.hand==='rh'?'lh':'rh';state.noteIndex=0;render()}
 if(action==='imp-note'){const s=impCurrent();if(s){state.noteIndex=Number(button.dataset.index);
-  (barChords('imp:'+s.id,state.impBar,state.hand)[state.noteIndex]||[]).forEach(function(n){playPiano(n)});render()}}
+  if(state.hand==='both'){
+    const st=twoHandSteps('imp:'+s.id,state.impBar)[state.noteIndex];
+    if(st)[].concat(st.rh||[],st.lh||[]).forEach(function(n){playPiano(n)});
+  }else{
+    (barChords('imp:'+s.id,state.impBar,state.hand)[state.noteIndex]||[]).forEach(function(n){playPiano(n)});
+  }
+  render()}}
 if(action==='imp-bar'){const s=impCurrent();if(s){impSelectBar(s,Number(button.dataset.bar));render()}}
 /* 一次播一個「時間點」，該時間點的音同時發聲。逐音播放會把八度雙音
    變成快速的八度跳躍，聽起來完全不像原曲。 */
-if(action==='imp-listen'){const s=impCurrent();if(s){const cs=barChords('imp:'+s.id,state.impBar,state.hand);const gap=Math.max(220,60000/state.bpm/2);let i=0;(function next(){if(i>=cs.length)return;cs[i].forEach(function(n){playPiano(n)});i++;setTimeout(next,gap)})()}}
+if(action==='imp-listen'){const s=impCurrent();if(s){
+  const gap=Math.max(220,60000/state.bpm/2);let i=0;
+  const cs=state.hand==='both'
+    ? twoHandSteps('imp:'+s.id,state.impBar).map(function(st,k){
+        /* 左手只在真的換和弦那一拍重按，不然每拍都重敲會很吵 */
+        return [].concat(st.rh||[], st.lhNew?(st.lh||[]):[])})
+    : barChords('imp:'+s.id,state.impBar,state.hand);
+  (function next(){if(i>=cs.length)return;cs[i].forEach(function(n){playPiano(n)});i++;setTimeout(next,gap)})()}}
 if(action==='imp-listen-both'){const s=impCurrent();if(s){const gap=Math.max(220,60000/state.bpm/2);
   ['rh','lh'].forEach(function(h){const cs=barChords('imp:'+s.id,state.impBar,h);let i=0;(function next(){if(i>=cs.length)return;cs[i].forEach(function(n){playPiano(n)});i++;setTimeout(next,gap)})()})}}
 });
