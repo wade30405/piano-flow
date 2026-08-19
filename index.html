@@ -97,6 +97,20 @@
 .prog-btns button{padding:10px 4px;border:1px solid var(--line);background:var(--paper);font:600 13px/1.2 inherit;cursor:pointer}
 .prog-btns button.on{border-color:var(--ink);background:var(--acid);font-weight:700}
 .prog small{display:block;margin-top:7px;color:var(--muted);font-size:12px}
+/* 接上電鋼琴 */
+.midi{margin-top:16px;padding:14px 16px;border:1px solid var(--line);background:var(--white)}
+.midi.on{border:2px solid #4a7a15;background:#f2f7e8}
+.midi.warn{border-left:4px solid var(--orange);background:#fdf3ef}
+.midi-head{display:flex;flex-wrap:wrap;gap:8px;justify-content:space-between;align-items:baseline}
+.midi-head b{font-size:16px}
+.midi-head span{color:var(--muted);font-size:12px}
+.midi-tip{margin:8px 0 0;color:#4d4b44;font-size:13px;line-height:1.7}
+.midi-bad{margin:8px 0 0;padding:8px 10px;background:#ffe8e0;border-left:3px solid var(--orange);font-size:14px;font-weight:700}
+.midi-stat{margin-top:9px;font-size:15px;font-weight:700}
+.midi-opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.midi-opts button,.midi>button{padding:9px 13px;border:1px solid var(--ink);background:var(--paper);font:600 13px/1 inherit;cursor:pointer}
+.midi-opts button.on{background:var(--acid);font-weight:700}
+.midi>button.main{margin-top:10px;background:var(--ink);color:var(--white);font-size:15px;font-weight:700;padding:12px 18px}
 /* 目錄裡的進度色 */
 .measure-grid button.lv1{background:#fbfde8}
 .measure-grid button.lv2{background:#eef6e0}
@@ -138,7 +152,7 @@ const DEGREE_NOTE={l5:"D4",l6:"E4",l7:"F#4","1":"G4","2":"A4","3":"B4","4":"C5",
 
 /* ==================== APP LOGIC：從這裡修改互動功能 ==================== */
 const NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-const state=Object.assign({song:"",noteIndex:0,bpm:36,lifeBar:1,lifePage:0,zoom:false,impBar:1,impPage:0,hand:"rh",metro:false,loopA:0,loopB:0,looping:false,progress:{}},JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
+const state=Object.assign({song:"",noteIndex:0,bpm:36,lifeBar:1,lifePage:0,zoom:false,impBar:1,impPage:0,hand:"rh",metro:false,loopA:0,loopB:0,looping:false,progress:{},ignoreOctave:false,autoAdvance:true,hit:0,miss:0},JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
 /* 曲目順序：由易到難——單音入門 → 純白鍵 → 原調。新手打開就落在最容易的 */
 function songLevel(s){return (s.melodyOnly?0:s.whiteOnly?1:2)}
 function orderedSongs(){
@@ -456,7 +470,7 @@ function renderImported(){
     +'<button data-action="imp-bar" data-bar="'+(bar+1)+'" '+(bar===song.totalBars?'disabled':'')+'>下一小節 →</button></div>'
     +'<div class="score-controls"><button data-action="imp-swap">切換到'+(other==='rh'?'右':'左')+'手</button>'
     +'<button data-action="imp-listen-both">▶ 雙手一起播放</button></div>'
-    +tempoBar()+loopBar(song,bar)+progressBar(song,bar)+'</section>'}
+    +midiPanel()+tempoBar()+loopBar(song,bar)+progressBar(song,bar)+'</section>'}
 
 /* 速度。新手要先用很慢的速度把音按對，再慢慢加快 */
 function tempoBar(){
@@ -553,6 +567,109 @@ function twoHandPanel(kind,bar){
     +'左手常常是一個長音撐滿整個小節，右手在上面連續彈好幾個音——那種時候左手整排都會是淡色。</p>'
     +handHint(rhAll,'rh')+handHint(lhAll,'lh')
     +'</div>'}
+
+/* ---------- 接上電鋼琴（Web MIDI）----------
+   琴的 USB-C 孔可傳輸 MIDI，接上電腦後瀏覽器就讀得到你按了哪個鍵，
+   可以當場判斷彈對沒有。
+
+   兩個限制要知道：
+   - Web MIDI 只在 https 或 localhost 底下可用。直接雙擊開啟檔案
+     （file://）拿不到權限。
+   - Safari 不支援，要用 Chrome 或 Edge。 */
+const midiIO={access:null,inputs:[],status:'idle',error:'',pending:[],timer:null};
+
+function midiSupported(){return typeof navigator!=='undefined'&&!!navigator.requestMIDIAccess}
+function midiSecure(){return location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'}
+
+function midiConnect(){
+  if(!midiSupported()){midiIO.status='unsupported';render();return}
+  if(!midiSecure()){midiIO.status='insecure';render();return}
+  midiIO.status='connecting';render();
+  navigator.requestMIDIAccess().then(function(access){
+    midiIO.access=access;
+    const bind=function(){
+      midiIO.inputs=[];
+      access.inputs.forEach(function(inp){
+        midiIO.inputs.push(inp.name||'MIDI 裝置');
+        inp.onmidimessage=onMidiMessage});
+      midiIO.status=midiIO.inputs.length?'ready':'nodevice';
+      render()};
+    bind();
+    access.onstatechange=bind;
+  }).catch(function(e){
+    midiIO.status='denied';midiIO.error=String(e&&e.message||e);render()})}
+
+function onMidiMessage(ev){
+  const d=ev.data;if(!d||d.length<3)return;
+  const cmd=d[0]&0xf0, note=d[1], vel=d[2];
+  if(cmd===0x90&&vel>0)midiNoteOn(note)}
+
+/* 和弦要同時按下好幾個鍵，但它們不會在同一毫秒抵達。
+   收集一小段時間內按下的音再一起比對，否則按和弦永遠會被判成錯。 */
+function midiNoteOn(n){
+  if(state.song.slice(0,4)!=='imp:')return;
+  midiIO.pending.push(n);
+  if(midiIO.timer)clearTimeout(midiIO.timer);
+  midiIO.timer=setTimeout(function(){
+    const played=midiIO.pending.slice();midiIO.pending=[];
+    checkPlayed(played)},70)}
+
+function checkPlayed(played){
+  const s=impCurrent();if(!s)return;
+  const kind='imp:'+s.id;
+  const hand=state.hand==='both'?'rh':state.hand;
+  const chords=state.hand==='both'
+    ? twoHandSteps(kind,state.impBar).map(function(st){return [].concat(st.rh||[],st.lhNew?(st.lh||[]):[])})
+    : barChords(kind,state.impBar,hand);
+  if(!chords.length)return;
+  const want=chords[state.noteIndex%chords.length]||[];
+  const wantMidi=want.map(midi).sort(function(a,b){return a-b});
+  const gotMidi=played.slice().sort(function(a,b){return a-b});
+  const same=state.ignoreOctave
+    ? sameSet(wantMidi.map(function(v){return v%12}),gotMidi.map(function(v){return v%12}))
+    : sameSet(wantMidi,gotMidi);
+  if(same){
+    state.hit=(state.hit||0)+1;state.wrong=0;
+    state.noteIndex++;
+    if(state.noteIndex>=chords.length){
+      state.noteIndex=0;
+      /* 一整個小節都彈對了，自動往下一小節走 */
+      if(state.autoAdvance&&state.impBar<s.totalBars)impSelectBar(s,state.impBar+1)}
+  }else{
+    state.miss=(state.miss||0)+1;state.wrong=1;
+    state.wrongNotes=gotMidi.map(function(v){return noteFromMidi(v)})}
+  render()}
+
+function sameSet(a,b){
+  if(a.length!==b.length)return false;
+  const A=a.slice().sort(),B=b.slice().sort();
+  for(let i=0;i<A.length;i++)if(A[i]!==B[i])return false;
+  return true}
+
+function midiPanel(){
+  const st=midiIO.status;
+  const box=function(cls,inner){return '<div class="midi '+cls+'">'+inner+'</div>'};
+  if(st==='ready'){
+    const hit=state.hit||0, miss=state.miss||0, tot=hit+miss;
+    return box('on',
+      '<div class="midi-head"><b>✓ 電鋼琴已連上</b><span>'+midiIO.inputs.join('、')+'</span></div>'
+      +'<p class="midi-tip">直接在琴上彈。<b>彈對會自動跳到下一個音</b>，彈錯會標紅。</p>'
+      +(state.wrong?'<p class="midi-bad">彈錯了：你按的是 '+(state.wrongNotes||[]).map(numberLabel).join(' + ')+'　再試一次</p>':'')
+      +'<div class="midi-stat">正確 '+hit+'　錯 '+miss+(tot?'　正確率 '+Math.round(hit/tot*100)+'%':'')+'</div>'
+      +'<div class="midi-opts">'
+      +'<button class="'+(state.ignoreOctave?'on':'')+'" data-action="midi-oct">'+(state.ignoreOctave?'✓ ':'')+'不管高低八度</button>'
+      +'<button class="'+(state.autoAdvance?'on':'')+'" data-action="midi-auto">'+(state.autoAdvance?'✓ ':'')+'整小節對了就前進</button>'
+      +'<button data-action="midi-reset">歸零統計</button></div>');}
+  if(st==='connecting')return box('','<b>正在連接…</b>');
+  if(st==='nodevice')return box('warn','<b>找不到琴</b><p class="midi-tip">請確認 USB-C 線已接上電腦、琴已開機，然後再按一次。</p><button data-action="midi-connect">重新偵測</button>');
+  if(st==='denied')return box('warn','<b>沒有取得權限</b><p class="midi-tip">瀏覽器要問你「允許使用 MIDI 裝置」，請選允許。'+(midiIO.error?'（'+midiIO.error+'）':'')+'</p><button data-action="midi-connect">再試一次</button>');
+  if(st==='unsupported')return box('warn','<b>這個瀏覽器不支援</b><p class="midi-tip">請改用 Chrome 或 Edge。Safari 沒有 MIDI 功能。</p>');
+  if(st==='insecure')return box('warn','<b>這個開啟方式無法使用 MIDI</b><p class="midi-tip">直接雙擊檔案（file://）拿不到 MIDI 權限。請改用 <b>http://localhost:8777/</b> 或線上版網址開啟。</p>');
+  return box('',
+    '<div class="midi-head"><b>接上你的電鋼琴</b><span>選配</span></div>'
+    +'<p class="midi-tip">你的琴 USB-C 孔可以傳 MIDI。用 USB 線接上電腦後，'
+    +'程式就能知道你按了哪個鍵——<b>彈對自動跳下一個音，彈錯當場標紅</b>。</p>'
+    +'<button class="main" data-action="midi-connect">連接電鋼琴</button>')}
 
 /* 節拍器：短促的高頻點擊，跟琴聲分得開 */
 function tick(strong){
@@ -659,6 +776,10 @@ function selectMeasure(kind,bar){if(kind.slice(0,4)==='imp:'){const s=impSong(ki
 document.addEventListener('click',function(event){const button=event.target.closest('button');if(!button)return;if(button.dataset.song){state.song=button.dataset.song;state.noteIndex=0;render();return}const action=button.dataset.action;if(!action)return;if(action==='measure')selectMeasure(button.dataset.kind,Number(button.dataset.bar));if(action==='page'){const kind=button.dataset.kind,index=Number(button.dataset.page);if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));if(s&&index>=0&&index<s.pages.length){state.impPage=index;state.impBar=s.pages[index].start;state.noteIndex=0}render();return}if(kind==='life'&&index>=0&&index<DATA.lifelongPages.length){state.lifePage=index;state.lifeBar=DATA.lifelongPages[index].start;state.noteIndex=0}render()}if(action==='scroll-score')document.getElementById('score').scrollIntoView({behavior:'smooth'});if(action==='zoom'){state.zoom=!state.zoom;render();document.getElementById('score').scrollIntoView()}if(action==='key'){playPiano(button.dataset.note)}if(action==='life-note'){state.noteIndex=Number(button.dataset.index);const s=lifeSteps(state.lifeBar)[state.noteIndex];playPiano(s.note);render()}if(action==='life-prev')selectMeasure('life',state.lifeBar-1);if(action==='life-next')selectMeasure('life',state.lifeBar+1);if(action==='life-listen'){const steps=lifeSteps(state.lifeBar);let i=0;function next(){if(i>=steps.length)return;playPiano(steps[i].note);i++;setTimeout(next,650)}next()}
 if(action==='white'){state.white=!state.white;state.noteIndex=0;render()}
 if(action==='metro'){state.metro=!state.metro;render()}
+if(action==='midi-connect')midiConnect();
+if(action==='midi-oct'){state.ignoreOctave=!state.ignoreOctave;render()}
+if(action==='midi-auto'){state.autoAdvance=!state.autoAdvance;render()}
+if(action==='midi-reset'){state.hit=0;state.miss=0;state.wrong=0;render()}
 if(action==='mark'){const s=impCurrent();if(s){
   if(!state.progress[s.id])state.progress[s.id]={};
   state.progress[s.id][state.impBar]=Number(button.dataset.lv);
