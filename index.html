@@ -110,6 +110,8 @@
 .midi-opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .midi-opts button,.midi>button{padding:9px 13px;border:1px solid var(--ink);background:var(--paper);font:600 13px/1 inherit;cursor:pointer}
 .midi-opts button.on{background:var(--acid);font-weight:700}
+.midi-out{margin-top:12px;padding-top:12px;border-top:1px dashed var(--line)}
+.midi-out>b{display:block;margin-bottom:8px;font-size:14px}
 .midi>button.main{margin-top:10px;background:var(--ink);color:var(--white);font-size:15px;font-weight:700;padding:12px 18px}
 /* 目錄裡的進度色 */
 .measure-grid button.lv1{background:#fbfde8}
@@ -152,7 +154,7 @@ const DEGREE_NOTE={l5:"D4",l6:"E4",l7:"F#4","1":"G4","2":"A4","3":"B4","4":"C5",
 
 /* ==================== APP LOGIC：從這裡修改互動功能 ==================== */
 const NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-const state=Object.assign({song:"",noteIndex:0,bpm:36,lifeBar:1,lifePage:0,zoom:false,impBar:1,impPage:0,hand:"rh",metro:false,loopA:0,loopB:0,looping:false,progress:{},ignoreOctave:false,autoAdvance:true,hit:0,miss:0},JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
+const state=Object.assign({song:"",noteIndex:0,bpm:36,lifeBar:1,lifePage:0,zoom:false,impBar:1,impPage:0,hand:"rh",metro:false,loopA:0,loopB:0,looping:false,progress:{},ignoreOctave:false,autoAdvance:true,hit:0,miss:0,lightKeys:false,useKeyboardSound:false,lightTested:false},JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
 /* 曲目順序：由易到難——單音入門 → 純白鍵 → 原調。新手打開就落在最容易的 */
 function songLevel(s){return (s.melodyOnly?0:s.whiteOnly?1:2)}
 function orderedSongs(){
@@ -588,16 +590,59 @@ function midiConnect(){
   navigator.requestMIDIAccess().then(function(access){
     midiIO.access=access;
     const bind=function(){
-      midiIO.inputs=[];
+      midiIO.inputs=[];midiIO.outs=[];
       access.inputs.forEach(function(inp){
         midiIO.inputs.push(inp.name||'MIDI 裝置');
         inp.onmidimessage=onMidiMessage});
+      /* MIDI 是雙向的。反方向（電腦→琴）可以讓琴用自己的音色發聲，
+         有鍵盤燈的琴通常也會跟著把對應的鍵點亮。 */
+      access.outputs.forEach(function(out){midiIO.outs.push(out)});
       midiIO.status=midiIO.inputs.length?'ready':'nodevice';
       render()};
     bind();
     access.onstatechange=bind;
   }).catch(function(e){
     midiIO.status='denied';midiIO.error=String(e&&e.message||e);render()})}
+
+/* ---------- 送訊號給琴 ----------
+   Note On 除了讓琴發聲，有鍵盤燈的琴多半也會把對應的鍵點亮。
+   但有些琴的燈只跟內建示範曲連動、不吃外部 MIDI——這沒辦法從規格判斷，
+   只能實際送出去試，所以介面上提供測試按鈕。 */
+function midiSend(bytes){
+  if(!midiIO.outs||!midiIO.outs.length)return false;
+  midiIO.outs.forEach(function(o){try{o.send(bytes)}catch(e){}});
+  return true}
+
+function midiLight(notes,ms,vel){
+  const v=vel===undefined?1:vel;   /* velocity 1：盡量只點燈、不發出大聲響 */
+  const ns=(notes||[]).filter(Boolean).map(midi);
+  if(!ns.length)return false;
+  const ok=midiSend([0x90,ns[0],v]);
+  if(!ok)return false;
+  ns.slice(1).forEach(function(n){midiSend([0x90,n,v])});
+  setTimeout(function(){ns.forEach(function(n){midiSend([0x80,n,0])})},ms||900);
+  return true}
+
+/* 讓琴用自己的音色彈這一顆音，取代瀏覽器的合成音 */
+function pianoOut(note,dur){
+  return midiLight([note],Math.max(200,(dur||0.6)*1000),96)}
+
+/* 依設定決定聲音從哪裡出來 */
+function sound(note,dur){
+  if(state.useKeyboardSound&&midiIO.outs&&midiIO.outs.length){
+    if(pianoOut(note,dur))return}
+  playPiano(note,dur)}
+
+/* 目前該按的鍵，在琴上點亮 */
+function lightCurrent(){
+  if(!state.lightKeys)return;
+  if(state.song.slice(0,4)!=='imp:')return;
+  const s=impCurrent();if(!s)return;
+  const kind='imp:'+s.id;
+  const hand=state.hand==='both'?'rh':state.hand;
+  const chords=barChords(kind,state.impBar,hand);
+  const cur=chords[state.noteIndex%Math.max(1,chords.length)];
+  if(cur&&cur.length)midiLight(cur,1500,1)}
 
 function onMidiMessage(ev){
   const d=ev.data;if(!d||d.length<3)return;
@@ -659,7 +704,24 @@ function midiPanel(){
       +'<div class="midi-opts">'
       +'<button class="'+(state.ignoreOctave?'on':'')+'" data-action="midi-oct">'+(state.ignoreOctave?'✓ ':'')+'不管高低八度</button>'
       +'<button class="'+(state.autoAdvance?'on':'')+'" data-action="midi-auto">'+(state.autoAdvance?'✓ ':'')+'整小節對了就前進</button>'
-      +'<button data-action="midi-reset">歸零統計</button></div>');}
+      +'<button data-action="midi-reset">歸零統計</button></div>'
+      /* 反向通道：讓琴發聲、讓琴的鍵盤燈亮起來 */
+      +(midiIO.outs&&midiIO.outs.length
+        ? '<div class="midi-out"><b>把訊號送回琴上</b>'
+          +'<div class="midi-opts">'
+          +'<button class="'+(state.lightKeys?'on':'')+'" data-action="midi-light">'
+          +(state.lightKeys?'✓ ':'')+'點亮該按的鍵</button>'
+          +'<button class="'+(state.useKeyboardSound?'on':'')+'" data-action="midi-sound">'
+          +(state.useKeyboardSound?'✓ ':'')+'用琴的音色發聲</button>'
+          +'<button data-action="midi-test">測試：點亮中央 C</button></div>'
+          +'<p class="midi-tip">你的琴有「鍵盤燈」功能，但有些琴的燈只跟內建示範曲連動、'
+          +'不接受電腦控制。<b>按一下測試鍵，看琴上中央 C（白鍵 24 號）會不會亮</b>——'
+          +'亮了就代表這個功能可以用。</p>'
+          +(state.lightTested?'<p class="midi-tip">已送出點燈訊號。若沒亮，代表這台琴的燈不吃外部 MIDI，'
+            +'但「用琴的音色發聲」仍然可用。</p>':'')
+          +'</div>'
+        : '<p class="midi-tip">（沒有偵測到可以送訊號回去的 MIDI 輸出埠，'
+          +'所以無法點亮琴鍵或用琴的音色發聲。）</p>'));}
   if(st==='connecting')return box('','<b>正在連接…</b>');
   if(st==='nodevice')return box('warn','<b>找不到琴</b>'
     +'<p class="midi-tip"><b>最常見的原因是線只能充電、不能傳資料</b>——兩種線外觀一模一樣，'
@@ -705,7 +767,7 @@ function runLoop(song){
     const cs=barChords(kind,bar,hand);
     const sp=beatSpans(kind,bar,hand);
     const lh=state.hand==='both'?barChords(kind,bar,'lh'):null;
-    if(lh&&lh.length)lh[0].forEach(function(n){playPiano(n,2.5)});
+    if(lh&&lh.length)lh[0].forEach(function(n){sound(n,2.5)});
     let i=0;
     (function step(){
       if(!state.looping)return;
@@ -715,7 +777,7 @@ function runLoop(song){
         return}
       const mult=sp[i]||1;
       if(state.metro)tick(i===0);
-      cs[i].forEach(function(n){playPiano(n,Math.max(.25,gap/1000*mult*0.95))});
+      cs[i].forEach(function(n){sound(n,Math.max(.25,gap/1000*mult*0.95))});
       state.noteIndex=i;
       /* 只換高亮，不整頁重繪——重繪會讓畫面閃爍且捲動位置跳掉 */
       const btns=document.querySelectorAll('.flow button');
@@ -779,15 +841,23 @@ function render(){
   const sel=document.getElementById('songSelect');
   if(sel&&sel.value!==state.song)sel.value=state.song;
   app.innerHTML=state.song.slice(0,4)==='imp:'?renderImported():renderLife();
-  save()}
+  save();
+  /* 換到不同的音才送點燈訊號。render 會因為各種原因重跑，
+     每次都送的話琴會被訊息洗版。 */
+  const k=state.song+'/'+state.impBar+'/'+state.noteIndex+'/'+state.hand;
+  if(state.lightKeys&&k!==render._k){render._k=k;lightCurrent()}}
 function selectMeasure(kind,bar){if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));if(s)impSelectBar(s,bar);render();return}state.lifeBar=Math.max(1,Math.min(114,bar));state.lifePage=pageForBar(DATA.lifelongPages,state.lifeBar);state.noteIndex=0;render()}
-document.addEventListener('click',function(event){const button=event.target.closest('button');if(!button)return;if(button.dataset.song){state.song=button.dataset.song;state.noteIndex=0;render();return}const action=button.dataset.action;if(!action)return;if(action==='measure')selectMeasure(button.dataset.kind,Number(button.dataset.bar));if(action==='page'){const kind=button.dataset.kind,index=Number(button.dataset.page);if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));if(s&&index>=0&&index<s.pages.length){state.impPage=index;state.impBar=s.pages[index].start;state.noteIndex=0}render();return}if(kind==='life'&&index>=0&&index<DATA.lifelongPages.length){state.lifePage=index;state.lifeBar=DATA.lifelongPages[index].start;state.noteIndex=0}render()}if(action==='scroll-score')document.getElementById('score').scrollIntoView({behavior:'smooth'});if(action==='zoom'){state.zoom=!state.zoom;render();document.getElementById('score').scrollIntoView()}if(action==='key'){playPiano(button.dataset.note)}if(action==='life-note'){state.noteIndex=Number(button.dataset.index);const s=lifeSteps(state.lifeBar)[state.noteIndex];playPiano(s.note);render()}if(action==='life-prev')selectMeasure('life',state.lifeBar-1);if(action==='life-next')selectMeasure('life',state.lifeBar+1);if(action==='life-listen'){const steps=lifeSteps(state.lifeBar);let i=0;function next(){if(i>=steps.length)return;playPiano(steps[i].note);i++;setTimeout(next,650)}next()}
+document.addEventListener('click',function(event){const button=event.target.closest('button');if(!button)return;if(button.dataset.song){state.song=button.dataset.song;state.noteIndex=0;render();return}const action=button.dataset.action;if(!action)return;if(action==='measure')selectMeasure(button.dataset.kind,Number(button.dataset.bar));if(action==='page'){const kind=button.dataset.kind,index=Number(button.dataset.page);if(kind.slice(0,4)==='imp:'){const s=impSong(kind.slice(4));if(s&&index>=0&&index<s.pages.length){state.impPage=index;state.impBar=s.pages[index].start;state.noteIndex=0}render();return}if(kind==='life'&&index>=0&&index<DATA.lifelongPages.length){state.lifePage=index;state.lifeBar=DATA.lifelongPages[index].start;state.noteIndex=0}render()}if(action==='scroll-score')document.getElementById('score').scrollIntoView({behavior:'smooth'});if(action==='zoom'){state.zoom=!state.zoom;render();document.getElementById('score').scrollIntoView()}if(action==='key'){sound(button.dataset.note)}if(action==='life-note'){state.noteIndex=Number(button.dataset.index);const s=lifeSteps(state.lifeBar)[state.noteIndex];sound(s.note);render()}if(action==='life-prev')selectMeasure('life',state.lifeBar-1);if(action==='life-next')selectMeasure('life',state.lifeBar+1);if(action==='life-listen'){const steps=lifeSteps(state.lifeBar);let i=0;function next(){if(i>=steps.length)return;sound(steps[i].note);i++;setTimeout(next,650)}next()}
 if(action==='white'){state.white=!state.white;state.noteIndex=0;render()}
 if(action==='metro'){state.metro=!state.metro;render()}
 if(action==='midi-connect')midiConnect();
 if(action==='midi-oct'){state.ignoreOctave=!state.ignoreOctave;render()}
 if(action==='midi-auto'){state.autoAdvance=!state.autoAdvance;render()}
 if(action==='midi-reset'){state.hit=0;state.miss=0;state.wrong=0;render()}
+/* 清掉防抖記錄讓 render 重送一次即可，別自己再呼叫一遍——會送出重複訊息 */
+if(action==='midi-light'){state.lightKeys=!state.lightKeys;render._k=null;render()}
+if(action==='midi-sound'){state.useKeyboardSound=!state.useKeyboardSound;render()}
+if(action==='midi-test'){state.lightTested=true;midiLight(['C4'],1800,1);render()}
 if(action==='mark'){const s=impCurrent();if(s){
   if(!state.progress[s.id])state.progress[s.id]={};
   state.progress[s.id][state.impBar]=Number(button.dataset.lv);
@@ -809,12 +879,12 @@ if(action==='imp-note'){const s=impCurrent();if(s){state.noteIndex=Number(button
   if(state.hand==='both'){
     const st=twoHandSteps('imp:'+s.id,state.impBar)[state.noteIndex];
     if(st){
-      (st.rh||[]).forEach(function(n){playPiano(n)});
+      (st.rh||[]).forEach(function(n){sound(n)});
       /* 左手就算這一拍是「壓著不動」，試聽時仍要發聲，否則聽不出兩手合起來的樣子 */
-      (st.lh||[]).forEach(function(n){playPiano(n,1.2)});
+      (st.lh||[]).forEach(function(n){sound(n,1.2)});
     }
   }else{
-    (barChords('imp:'+s.id,state.impBar,state.hand)[state.noteIndex]||[]).forEach(function(n){playPiano(n)});
+    (barChords('imp:'+s.id,state.impBar,state.hand)[state.noteIndex]||[]).forEach(function(n){sound(n)});
   }
   render()}}
 if(action==='imp-bar'){const s=impCurrent();if(s){impSelectBar(s,Number(button.dataset.bar));render()}}
@@ -829,7 +899,7 @@ if(action==='imp-listen'){const s=impCurrent();if(s){
       if(i>=steps.length)return;
       const st=steps[i];
       const mult=sp[i]||1;
-      (st.rh||[]).forEach(function(n){playPiano(n,Math.max(.25,gap/1000*mult*0.95))});
+      (st.rh||[]).forEach(function(n){sound(n,Math.max(.25,gap/1000*mult*0.95))});
       /* 左手只在真的換和弦那一拍按下去，但要讓它一直響到下次換和弦為止。
          若照右手的節奏每拍都重敲，或用預設的 0.55 秒就斷掉，
          左手聽起來會像沒按一樣。 */
@@ -838,7 +908,7 @@ if(action==='imp-listen'){const s=impCurrent();if(s){
         for(let k=i+1;k<steps.length&&!steps[k].lhNew;k++)hold++;
         let span=0;
         for(let k=i;k<i+hold&&k<steps.length;k++)span+=(sp[k]||1);
-        st.lh.forEach(function(n){playPiano(n,Math.max(.6,span*gap/1000*0.98))});
+        st.lh.forEach(function(n){sound(n,Math.max(.6,span*gap/1000*0.98))});
       }
       i++;setTimeout(next,gap*mult)})();
   }else{
@@ -850,7 +920,7 @@ if(action==='imp-listen'){const s=impCurrent();if(s){
       if(i>=cs.length)return;
       const mult=sp[i]||1;
       const hold=gap/1000*mult*0.95;
-      cs[i].forEach(function(n){playPiano(n,Math.max(.25,hold))});
+      cs[i].forEach(function(n){sound(n,Math.max(.25,hold))});
       i++;setTimeout(next,gap*mult)})();
   }}}
 if(action==='imp-listen-both'){const s=impCurrent();if(s){const gap=Math.max(220,60000/state.bpm/2);
@@ -858,11 +928,11 @@ if(action==='imp-listen-both'){const s=impCurrent();if(s){const gap=Math.max(220
   (function next(){
     if(i>=steps.length)return;
     const st=steps[i];
-    (st.rh||[]).forEach(function(n){playPiano(n)});
+    (st.rh||[]).forEach(function(n){sound(n)});
     if(st.lhNew&&st.lh&&st.lh.length){
       let hold=1;
       for(let k=i+1;k<steps.length&&!steps[k].lhNew;k++)hold++;
-      st.lh.forEach(function(n){playPiano(n,Math.max(.6,hold*gap/1000*0.98))});
+      st.lh.forEach(function(n){sound(n,Math.max(.6,hold*gap/1000*0.98))});
     }
     i++;setTimeout(next,gap)})()}}
 });
