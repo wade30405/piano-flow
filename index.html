@@ -80,12 +80,14 @@
 .guide-btns button{padding:11px 16px;border:1px solid var(--ink);background:var(--paper);font:700 14px/1 inherit;cursor:pointer}
 .guide-btns button.on{background:var(--acid)}
 @media(max-width:700px){.mode-bar{grid-template-columns:1fr}}
-/* 頂部列：曲名、連線狀態、開啟選單 */
-.topline{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:11px 14px;border:1px solid var(--ink);background:var(--white)}
-.menu-btn{flex:none;padding:11px 16px;border:1px solid var(--ink);background:var(--ink);color:var(--white);font:700 15px/1 inherit;cursor:pointer}
-.topline-now{min-width:0;line-height:1.4}
-.topline-now b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.topline-now span{font-size:12px;color:var(--muted)}
+/* 頁面 header：固定在頂端，選單按鈕放右上——就是網站放登入的位置 */
+.topbar{position:sticky;top:0;z-index:30}
+.topbar-right{display:flex;align-items:center;gap:12px;min-width:0}
+.conn{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:38vw}
+.conn.on{color:#4a7a15;font-weight:700}
+.menu-btn{flex:none;padding:10px 15px;border:1px solid var(--ink);background:var(--ink);color:var(--white);font:700 14px/1 inherit;cursor:pointer;white-space:nowrap}
+.menu-btn:hover{background:var(--orange)}
+@media(max-width:700px){.conn{display:none}}
 /* 左側抽屜：平常收起來，畫面只留「現在要按什麼」 */
 .scrim{position:fixed;inset:0;z-index:40;background:rgba(23,23,20,.45);opacity:0;pointer-events:none;transition:opacity .18s}
 .scrim.on{opacity:1;pointer-events:auto}
@@ -212,7 +214,7 @@
 </style>
 </head>
 <body>
-<header class="topbar"><div class="brand"><span class="brandmark">PF</span><span>Piano Flow</span></div><div class="session">線上版 · 不含曲譜圖</div></header>
+<header class="topbar"><div class="brand"><span class="brandmark">PF</span><span>Piano Flow</span></div><div class="topbar-right"><span class="conn" id="connDot">○ 未接琴</span><button class="menu-btn" data-action="drawer">☰　設定與工具</button></div></header>
 <main class="shell">
   <section class="hero"><div><p class="eyebrow">電子琴跟彈教室</p><h1>不看五線譜，<br><em>也能開始彈。</em></h1></div><p>這份檔案把曲譜圖片、琴鍵數字、播放器與介面全部放在同一個 HTML 裡。可離線開啟，也可直接交給 Codex 修改。</p></section>
   
@@ -566,12 +568,15 @@ function renderImported(){
 /* ---------- 頂部列與側邊選單 ----------
    平常畫面只留「現在要按什麼」，設定與工具收在左側抽屜裡。
    功能一多，全部攤在同一頁就會變成得一直捲才找得到東西。 */
+/* 曲名與連線狀態直接更新到頁面 header，不在內容區另外做一條 */
 function topBar(song){
-  const lit=midiIO.status==='ready';
-  return '<div class="topline">'
-    +'<button class="menu-btn" data-action="drawer">☰　設定與工具</button>'
-    +'<div class="topline-now"><b>'+song.title+'</b>'
-    +'<span>'+(lit?'● 電鋼琴已連線':'○ 未接琴')+'</span></div></div>'}
+  const dot=document.getElementById('connDot');
+  if(dot){
+    const lit=midiIO.status==='ready';
+    dot.textContent=(lit?'● ':'○ ')+song.title;
+    dot.className='conn'+(lit?' on':'');
+  }
+  return ''}
 
 function drawer(song,bar){
   const open=!!state.drawer;
