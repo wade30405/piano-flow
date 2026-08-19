@@ -80,6 +80,28 @@
 .guide-btns button{padding:11px 16px;border:1px solid var(--ink);background:var(--paper);font:700 14px/1 inherit;cursor:pointer}
 .guide-btns button.on{background:var(--acid)}
 @media(max-width:700px){.mode-bar{grid-template-columns:1fr}}
+/* 頂部列：曲名、連線狀態、開啟選單 */
+.topline{display:flex;align-items:center;gap:12px;margin:0 0 14px;padding:11px 14px;border:1px solid var(--ink);background:var(--white)}
+.menu-btn{flex:none;padding:11px 16px;border:1px solid var(--ink);background:var(--ink);color:var(--white);font:700 15px/1 inherit;cursor:pointer}
+.topline-now{min-width:0;line-height:1.4}
+.topline-now b{display:block;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.topline-now span{font-size:12px;color:var(--muted)}
+/* 左側抽屜：平常收起來，畫面只留「現在要按什麼」 */
+.scrim{position:fixed;inset:0;z-index:40;background:rgba(23,23,20,.45);opacity:0;pointer-events:none;transition:opacity .18s}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:fixed;top:0;left:0;z-index:41;width:min(420px,88vw);height:100%;
+  background:var(--paper);border-right:2px solid var(--ink);
+  transform:translateX(-102%);transition:transform .2s ease;
+  display:flex;flex-direction:column;box-shadow:0 0 30px rgba(0,0,0,.18)}
+.drawer.on{transform:none}
+.drawer-head{flex:none;display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;border-bottom:2px solid var(--ink);background:var(--white)}
+.drawer-head b{font-size:18px}
+.drawer-head button{padding:7px 12px;border:1px solid var(--ink);background:var(--paper);font:700 16px/1 inherit;cursor:pointer}
+.drawer-body{flex:1;overflow-y:auto;padding:14px}
+.drawer-body select{width:100%;padding:12px;border:1px solid var(--ink);background:var(--white);font:700 15px/1.3 inherit;color:var(--ink);cursor:pointer}
+.drawer-body .measure-grid.keys{grid-template-columns:1fr 1fr}
+.drawer-body .score-image img{max-width:100%}
 /* 收合區塊：把當下不需要看的東西收起來，整頁才不會長到找不到東西 */
 .fold{margin:0 0 10px;border:1px solid var(--ink);background:var(--white)}
 .fold>summary{padding:15px 18px;font:700 16px/1.3 inherit;cursor:pointer;list-style:none;
@@ -98,6 +120,9 @@
 .guide-btns button.main.stop{background:var(--orange)}
 .drill-in{margin:11px 0 0;padding-top:10px;border-top:1px dashed var(--line);color:var(--muted);font-size:13px}
 .drill-in b{color:var(--ink);font-size:15px;letter-spacing:.05em}
+.guide-btns.bars{align-items:center;margin-top:8px}
+.guide-btns.bars span{color:var(--muted);font-size:13px}
+.guide-btns.bars button{padding:8px 12px;font-size:13px}
 /* 節奏橫條：長度＝這個音要按多久 */
 .flow button{position:relative;padding-bottom:14px!important}
 .dur{position:absolute;left:6px;bottom:5px;height:4px;border-radius:2px;background:var(--ink);opacity:.42}
@@ -190,7 +215,7 @@
 <header class="topbar"><div class="brand"><span class="brandmark">PF</span><span>Piano Flow</span></div><div class="session">線上版 · 不含曲譜圖</div></header>
 <main class="shell">
   <section class="hero"><div><p class="eyebrow">電子琴跟彈教室</p><h1>不看五線譜，<br><em>也能開始彈。</em></h1></div><p>這份檔案把曲譜圖片、琴鍵數字、播放器與介面全部放在同一個 HTML 裡。可離線開啟，也可直接交給 Codex 修改。</p></section>
-  <nav class="song-picker"><label for="songSelect">選擇曲目</label><select id="songSelect" aria-label="選擇曲目"></select><p class="song-note"></p></nav>
+  
   <div id="app"></div>
   <footer class="footer">PIANO FLOW · STANDALONE HTML</footer>
 </main>
@@ -212,7 +237,7 @@ const DEGREE_NOTE={l5:"D4",l6:"E4",l7:"F#4","1":"G4","2":"A4","3":"B4","4":"C5",
 
 /* ==================== APP LOGIC：從這裡修改互動功能 ==================== */
 const NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
-const state=Object.assign({song:"",noteIndex:0,bpm:36,lifeBar:1,lifePage:0,zoom:false,impBar:1,impPage:0,hand:"rh",metro:false,loopA:0,loopB:0,looping:false,progress:{},ignoreOctave:false,autoAdvance:true,hit:0,miss:0,lightKeys:false,useKeyboardSound:false,lightTested:false,drillOn:false,drillLoop:true,fold:{}},JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
+const state=Object.assign({song:"",noteIndex:0,bpm:36,lifeBar:1,lifePage:0,zoom:false,impBar:1,impPage:0,hand:"rh",metro:false,loopA:0,loopB:0,looping:false,progress:{},ignoreOctave:false,autoAdvance:true,hit:0,miss:0,lightKeys:false,useKeyboardSound:false,lightTested:false,drillOn:false,drillLoop:true,drillBars:1,fold:{}},JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
 /* 曲目順序：由易到難——單音入門 → 純白鍵 → 原調。新手打開就落在最容易的 */
 function songLevel(s){return (s.melodyOnly?0:s.whiteOnly?1:2)}
 function orderedSongs(){
@@ -220,7 +245,7 @@ function orderedSongs(){
 /* 上次選的曲目若已被移除就退回第一首，否則整頁會空白 */
 const _valid=orderedSongs().map(function(s){return 'imp:'+s.id}).concat(['lifelong']);
 if(_valid.indexOf(state.song)<0)state.song=_valid[0];
-state.looping=false;  /* 循環播放是暫態，重新開啟頁面不該還在跑 */
+state.looping=false;state.drillOn=false;  /* 播放與練習都是暫態，重開頁面不該還在跑 */
 if(!state.progress)state.progress={};
 const app=document.getElementById("app");
 function save(){localStorage.setItem("pianoFlowStandaloneState",JSON.stringify(state))}
@@ -483,12 +508,9 @@ function renderImported(){
   const other=state.hand==='rh'?'lh':'rh';
   const mode=state.mode||'practice';
   if(mode==='auto')
-    /* 自動彈奏時只要播放器，其餘一律收起來——這個模式不是拿來練的 */
-    return modeBar()+autoPanel(song,bar)+tempoBar()
-      +fold('score','曲譜與小節目錄',
-        scorePanel(song.pages,state.impPage,'imp:'+song.id,song.title+'　原譜')
-        +measureCatalog(song.pages,bar,'imp:'+song.id,song.totalBars),false);
-  return modeBar()
+    /* 自動彈奏時只要播放器，其餘一律收進側邊選單 */
+    return topBar(song)+modeBar()+autoPanel(song,bar)+drawer(song,bar);
+  return topBar(song)+modeBar()
     +'<section class="panel"><div class="practice-box">'
     +'<p class="eyebrow">逐小節跟彈 · 音符由 PDF 自動辨識</p>'
     +'<h2>第 '+bar+' 小節<small style="font-weight:400;font-size:14px;opacity:.6"> ／ 全曲 '+song.totalBars+' 小節</small></h2>'
@@ -539,17 +561,47 @@ function renderImported(){
     +'<div class="score-controls"><button data-action="imp-swap">切換到'+(other==='rh'?'右':'左')+'手</button>'
     +'<button data-action="imp-listen-both">▶ 雙手一起播放</button></div>'
     +'</section>'
-    /* 以下都是「需要時才打開」。全部攤平的話整頁要捲很久才找得到東西 */
-    +fold('hint','手位與節奏提示',
-      (state.hand!=='both'&&chords.length?handHint(notes,state.hand):'')
-      +(chords.length?'<p class="dur-tip">音符下方的橫條是<b>這個音要按多久</b>——長條要按住，短條快放。</p>':''),
-      true)
-    +fold('drill','練習工具　·　反覆／進度／速度',
+    +drawer(song,bar)}
+
+/* ---------- 頂部列與側邊選單 ----------
+   平常畫面只留「現在要按什麼」，設定與工具收在左側抽屜裡。
+   功能一多，全部攤在同一頁就會變成得一直捲才找得到東西。 */
+function topBar(song){
+  const lit=midiIO.status==='ready';
+  return '<div class="topline">'
+    +'<button class="menu-btn" data-action="drawer">☰　設定與工具</button>'
+    +'<div class="topline-now"><b>'+song.title+'</b>'
+    +'<span>'+(lit?'● 電鋼琴已連線':'○ 未接琴')+'</span></div></div>'}
+
+function drawer(song,bar){
+  const open=!!state.drawer;
+  const kind='imp:'+song.id;
+  const notes=barNotes(kind,bar,state.hand==='both'?'rh':state.hand);
+  return '<div class="scrim'+(open?' on':'')+'" data-action="drawer-close"></div>'
+    +'<aside class="drawer'+(open?' on':'')+'">'
+    +'<div class="drawer-head"><b>設定與工具</b>'
+    +'<button data-action="drawer-close" aria-label="關閉">✕</button></div>'
+    +'<div class="drawer-body">'
+    +fold('d-song','選擇曲目',songPicker(),true)
+    +fold('d-hint','手位與節奏提示',
+      (state.hand!=='both'&&notes.length?handHint(notes,state.hand):'')
+      +'<p class="dur-tip">音符下方的橫條是<b>這個音要按多久</b>——長條要按住，短條快放。</p>',false)
+    +fold('d-drill','反覆練習　·　進度　·　速度',
       loopBar(song,bar)+progressBar(song,bar)+tempoBar(),false)
-    +fold('score','曲譜與小節目錄',
-      scorePanel(song.pages,state.impPage,'imp:'+song.id,song.title+'　原譜')
-      +measureCatalog(song.pages,bar,'imp:'+song.id,song.totalBars),false)
-    +fold('midi','接上電鋼琴',midiPanel(),midiIO.status!=='ready')}
+    +fold('d-score','曲譜與小節目錄',
+      scorePanel(song.pages,state.impPage,kind,song.title+'　原譜')
+      +measureCatalog(song.pages,bar,kind,song.totalBars),false)
+    +fold('d-midi','接上電鋼琴',midiPanel(),midiIO.status!=='ready')
+    +'</div></aside>'}
+
+/* 曲目選單搬進抽屜，主畫面就不必再放一排 */
+function songPicker(){
+  const opts=songOptions();
+  return '<select id="songSelect" aria-label="選擇曲目">'
+    +opts.map(function(o,i){
+      return '<option value="'+o.value+'"'+(o.value===state.song?' selected':'')+'>'
+        +String(i+1).padStart(2,'0')+'　'+o.title+'　（'+o.tag+'　'+o.bars+' 小節）</option>'}).join('')
+    +'</select>'}
 
 /* ---------- 可收合區塊 ----------
    功能一路加上來，整頁變得很長，要找東西得一直捲。把「當下不需要看」的
@@ -596,27 +648,33 @@ function practiceGuide(lit){
       +'<div class="guide-btns"><button data-action="midi-connect">連接電鋼琴</button></div></div>';
 
   const s=impCurrent();
-  const kind=s?'imp:'+s.id:'';
-  const hand=state.hand==='both'?'rh':state.hand;
-  const total=s?barChords(kind,state.impBar,hand).length:0;
-  const done=Math.min(state.noteIndex,total);
-  const recent=(midiIO.recent||[]).slice(-4).map(numberLabel).join('　');
+  const r=s?drillRange(s):[1,1];
+  const n=Math.max(1,Number(state.drillBars)||1);
+  const recent=(midiIO.recent||[]).slice(-5).map(numberLabel).join('　');
+  const ph=drill.phase==='preview'?'整段預覽中——先把手擺到亮起來的鍵上'
+          :drill.phase==='play'?'跟著燈按下去'
+          :'';
 
   return '<div class="guide'+(on?' on':'')+'">'
-    +'<b>'+(on?'● 練習中　第 '+state.impBar+' 小節　'+done+'／'+total+' 音':'跟著發光的琴鍵練這一小節')+'</b>'
+    +'<b>'+(on?'● 練習中　第 '+r[0]+(r[1]>r[0]?'–'+r[1]:'')+' 小節'+(ph?'　·　'+ph:'')
+              :'跟著發光的琴鍵練')+'</b>'
     +'<p>'+(on
-      ? '琴上亮起的就是下一個要按的鍵。<b>按對會自動亮下一個</b>，按錯不會前進、燈會停在原地等你。'
-        +'整個小節走完會'+(state.drillLoop?'回到這一小節開頭再來一次':'自動進到下一小節')+'。'
-      : '按下面的按鈕開始。程式會亮起第一個鍵，之後跟著你的進度一路往下走。')+'</p>'
+      ? '先整段亮起來讓你把手擺好，接著燈會照著譜上的節奏一顆一顆往前走，你跟著彈。'
+        +'走完會'+(state.drillLoop?'從這一段開頭再來一次':'接到下一段')+'。'
+      : '一次練 '+n+' 個小節。開始後會先把整段要按的鍵全部亮起來，'
+        +'讓你把手擺好，然後燈就照著節奏走，你跟著按。')+'</p>'
     +'<div class="guide-btns">'
     +'<button class="main'+(on?' stop':'')+'" data-action="drill">'
       +(on?'■ 停止練習':'▶ 開始跟著燈練習')+'</button>'
     +'<button class="'+(state.drillLoop?'on':'')+'" data-action="drill-loop">'
-      +(state.drillLoop?'✓ 這一小節反覆練':'走完換下一小節')+'</button>'
-    +(on?'<button data-action="light-again">燈滅了？重新點亮</button>':'')
+      +(state.drillLoop?'✓ 這一段反覆練':'走完接下一段')+'</button>'
     +'</div>'
-    /* 把收到的按鍵印出來。沒有這個，使用者按了沒反應時無從判斷是
-       「琴沒送出來」還是「按錯了」 */
+    +'<div class="guide-btns bars"><span>一次練</span>'
+    +[1,2,4].map(function(k){
+        return '<button class="'+(n===k?'on':'')+'" data-action="drill-bars" data-n="'+k+'">'
+          +k+' 小節</button>'}).join('')
+    +'</div>'
+    /* 把收到的按鍵印出來。按了沒反應時，這行能區分是「琴沒送訊號」還是「按錯」 */
     +'<p class="drill-in">剛才收到你按的鍵：<b>'+(recent||'（還沒收到）')+'</b></p>'
     +'</div>'}
 
@@ -759,20 +817,32 @@ function midiSend(bytes){
   midiIO.outs.forEach(function(o){try{o.send(bytes)}catch(e){}});
   return true}
 
+/* 熄掉目前亮著的燈 */
+function midiLightsOff(){
+  (midiIO.lit||[]).forEach(function(m){
+    for(let ch=0;ch<16;ch++)midiSend([0x80|ch,m,0])});
+  midiIO.lit=[]}
+
+/* 點亮指定的鍵。ms 傳 0（或不傳）表示一直亮著不自動熄——
+   練習時燈要留在那裡等你按，亮一下就滅的話根本來不及看。 */
 function midiLight(notes,ms,vel){
   const v=vel===undefined?1:vel;   /* velocity 1：盡量只點燈、不發出大聲響 */
   const ns=(notes||[]).filter(Boolean).map(midi);
   if(!ns.length)return false;
+  midiLightsOff();
   /* 有些琴會把收到的 Note On 原樣回送給電腦（MIDI thru）。若不擋掉，
      我們送出去點燈的那顆音會被當成「使用者按了鍵」，練習會自己往前跑。
      記下剛送出的音，短時間內收到同一顆就忽略。 */
   if(!midiIO.echo)midiIO.echo={};
   const now=Date.now();
   ns.forEach(function(m){midiIO.echo[m]=now});
-  const ok=midiSend([0x90,ns[0],v]);
+  /* 掃過全部 16 個 channel：有些琴的燈只吃特定 channel，不一定是 1 */
+  let ok=false;
+  ns.forEach(function(n){
+    for(let ch=0;ch<16;ch++) if(midiSend([0x90|ch,n,v])) ok=true});
   if(!ok)return false;
-  ns.slice(1).forEach(function(n){midiSend([0x90,n,v])});
-  setTimeout(function(){ns.forEach(function(n){midiSend([0x80,n,0])})},ms||900);
+  midiIO.lit=ns.slice();
+  if(ms>0) setTimeout(function(){midiLightsOff()},ms);
   return true}
 
 /* 讓琴用自己的音色彈這一顆音，取代瀏覽器的合成音 */
@@ -794,7 +864,7 @@ function lightCurrent(){
   const hand=state.hand==='both'?'rh':state.hand;
   const chords=barChords(kind,state.impBar,hand);
   const cur=chords[state.noteIndex%Math.max(1,chords.length)];
-  if(cur&&cur.length)midiLight(cur,1500,1)}
+  if(cur&&cur.length)midiLight(cur,0,1)}   /* 0 = 一直亮著等你按 */
 
 function onMidiMessage(ev){
   const d=ev.data;if(!d||d.length<3)return;
@@ -905,6 +975,86 @@ function midiPanel(){
     +'<p class="midi-tip">要用<b>能傳資料</b>的 USB-C 線（只能充電的線接了也認不到）、'
     +'琴要開機、瀏覽器要用 Chrome 或 Edge。</p>'
     +'<button class="main" data-action="midi-connect">連接電鋼琴</button>')}
+
+/* ---------- 整段跟燈練習 ----------
+   一次只餵一顆音、按了才亮下一顆，練起來是斷的，沒有節奏可言。
+   真正練琴是「看一小段、彈一小段」，所以改成以小節為單位：
+
+   第一階段 先把整段會用到的鍵全部亮起來，讓手有時間找位置；
+   第二階段 燈依照譜上的節奏依序走，你跟著彈；
+   走完停一拍再從頭，一直反覆到你按停止。 */
+const drill={timers:[],phase:''};
+
+function drillClear(){
+  drill.timers.forEach(function(t){clearTimeout(t)});
+  drill.timers=[];}
+
+function drillStop(){
+  drillClear();drill.phase='';
+  midiLightsOff();
+  state.drillOn=false;}
+
+function drillRange(song){
+  const n=Math.max(1,Number(state.drillBars)||1);
+  const from=Math.max(1,Math.min(song.totalBars,state.impBar));
+  return [from,Math.min(song.totalBars,from+n-1)]}
+
+function drillRun(){
+  if(!state.drillOn)return;
+  const song=impCurrent();if(!song)return drillStop();
+  const kind='imp:'+song.id;
+  const hand=state.hand==='both'?'rh':state.hand;
+  const r=drillRange(song),from=r[0],to=r[1];
+  const barSec=autoBarSec();
+  drillClear();
+
+  /* 第一階段：整段的鍵一起亮，讓手先擺好位置 */
+  const all=[];
+  for(let b=from;b<=to;b++)
+    barChords(kind,b,hand).forEach(function(c){c.forEach(function(n){if(n)all.push(n)})});
+  const uniq=all.filter(function(v,i,a){return a.indexOf(v)===i});
+  if(!uniq.length){ /* 這段沒有音就直接跳過 */
+    drill.timers.push(setTimeout(drillNext,600));return}
+
+  drill.phase='preview';
+  midiLight(uniq,0,1);
+  state.drillNow=-1;render._k=null;render();
+
+  /* 第二階段：依譜上的節奏依序亮 */
+  const preview=Math.max(1200,barSec*450);
+  let t=preview;
+  let idx=0;
+  for(let b=from;b<=to;b++){
+    const chords=barChords(kind,b,hand);
+    const times=impTimes(song,b,hand);
+    const base=(b-from)*barSec*1000;
+    chords.forEach(function(ch,i){
+      const rel=times[i]!==undefined?times[i]:i/Math.max(1,chords.length);
+      const at=preview+base+rel*barSec*1000;
+      const my=idx++;
+      drill.timers.push(setTimeout(function(){
+        if(!state.drillOn)return;
+        drill.phase='play';
+        state.drillNow=my;state.impBar=b;
+        midiLight(ch,0,1);
+        if(state.metro&&i===0)tick(true);
+        render._k=null;render();},at));
+    });
+  }
+  const total=preview+(to-from+1)*barSec*1000;
+  drill.timers.push(setTimeout(drillNext,total+600));
+}
+
+function drillNext(){
+  if(!state.drillOn)return;
+  const song=impCurrent();if(!song)return drillStop();
+  const r=drillRange(song);
+  if(!state.drillLoop){
+    const next=r[1]+1;
+    if(next>song.totalBars){drillStop();render._k=null;render();return}
+    impSelectBar(song,next);
+  }
+  drillRun();}
 
 /* 節拍器：短促的高頻點擊，跟琴聲分得開 */
 function tick(strong){
@@ -1291,27 +1441,18 @@ function songOptions(){
   list.push({value:'lifelong', title:'一生所愛', bars:114, tag:'1＝G'});
   return list}
 
-function buildSongSwitch(){
-  const sel=document.getElementById('songSelect');if(!sel)return;
-  const opts=songOptions();
-  sel.innerHTML=opts.map(function(o,i){
-    return '<option value="'+o.value+'">'+String(i+1).padStart(2,'0')+'　'
-      +o.title+'　（'+o.tag+'　'+o.bars+' 小節）</option>'}).join('');
-  sel.value=state.song;
-  const note=document.querySelector('.song-note');
-  if(note){const cur=opts.filter(function(o){return o.value===state.song})[0];
-    note.textContent=cur?cur.tag+'　全曲 '+cur.bars+' 小節':''}}
+/* 曲目選單現在由抽屜自己渲染（songPicker），這裡不用再做事 */
+function buildSongSwitch(){}
 
 document.addEventListener('change',function(e){
   if(e.target&&e.target.id==='songSelect'){
     /* 換曲目要回到開頭。沿用上一首的小節數／頁碼在曲子長度不同時會指到不存在的地方 */
     state.song=e.target.value;state.noteIndex=0;state.impBar=1;state.impPage=0;
-    state.loopA=0;state.loopB=0;
-    buildSongSwitch();render()}});
+    state.loopA=0;state.loopB=0;state.drawer=false;
+    render()}});
 
 function render(){
-  const sel=document.getElementById('songSelect');
-  if(sel&&sel.value!==state.song)sel.value=state.song;
+
   app.innerHTML=state.song.slice(0,4)==='imp:'?renderImported():renderLife();
   save();
   /* 換到不同的音才送點燈訊號。render 會因為各種原因重跑，
@@ -1334,13 +1475,17 @@ if(action==='mode'){
   render._k=null;render()}
 if(action==='light-again'){render._k=null;lightCurrent()}
 if(action==='drill'){
-  state.drillOn=!state.drillOn;
-  if(state.drillOn){
-    state.noteIndex=0;state.wrong=0;state.drillRound=0;
+  if(state.drillOn){drillStop();render._k=null;render()}
+  else{
+    state.drillOn=true;state.noteIndex=0;state.wrong=0;
     if(midiIO.outs&&midiIO.outs.length)state.lightKeys=true;
-  }
-  render._k=null;render()}
+    drillRun();}}
+if(action==='drill-bars'){
+  state.drillBars=Number(button.dataset.n)||1;
+  if(state.drillOn)drillRun(); else render()}
 if(action==='drill-loop'){state.drillLoop=!state.drillLoop;render()}
+if(action==='drawer'){state.drawer=true;render()}
+if(action==='drawer-close'){state.drawer=false;render()}
 if(action==='midi-connect')midiConnect();
 if(action==='midi-oct'){state.ignoreOctave=!state.ignoreOctave;render()}
 if(action==='midi-auto'){state.autoAdvance=!state.autoAdvance;render()}
