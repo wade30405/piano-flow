@@ -715,10 +715,11 @@ function midiPanel(){
           +(state.useKeyboardSound?'✓ ':'')+'用琴的音色發聲</button>'
           +'<button data-action="midi-test">測試：點亮中央 C</button></div>'
           +'<p class="midi-tip">你的琴有「鍵盤燈」功能，但有些琴的燈只跟內建示範曲連動、'
-          +'不接受電腦控制。<b>按一下測試鍵，看琴上中央 C（白鍵 24 號）會不會亮</b>——'
-          +'亮了就代表這個功能可以用。</p>'
-          +(state.lightTested?'<p class="midi-tip">已送出點燈訊號。若沒亮，代表這台琴的燈不吃外部 MIDI，'
-            +'但「用琴的音色發聲」仍然可用。</p>':'')
+          +'不接受電腦控制。<b>按一下測試鍵，盯著琴上中央 C（白鍵 24 號）看會不會亮</b>——'
+          +'訊號會在約 1.5 秒內掃過全部 16 個 MIDI 頻道，只要這台琴的燈吃任何一個就會亮。</p>'
+          +(state.lightTested?'<p class="midi-tip"><b>亮了</b> → 把「點亮該按的鍵」打開就能用。'
+            +'<b>沒亮</b> → 這台琴的燈不吃外部 MIDI，把這個功能忽略即可；'
+            +'旁邊的「用琴的音色發聲」不受影響，那個一定可用。</p>':'')
           +'</div>'
         : '<p class="midi-tip">（沒有偵測到可以送訊號回去的 MIDI 輸出埠，'
           +'所以無法點亮琴鍵或用琴的音色發聲。）</p>'));}
@@ -857,7 +858,18 @@ if(action==='midi-reset'){state.hit=0;state.miss=0;state.wrong=0;render()}
 /* 清掉防抖記錄讓 render 重送一次即可，別自己再呼叫一遍——會送出重複訊息 */
 if(action==='midi-light'){state.lightKeys=!state.lightKeys;render._k=null;render()}
 if(action==='midi-sound'){state.useKeyboardSound=!state.useKeyboardSound;render()}
-if(action==='midi-test'){state.lightTested=true;midiLight(['C4'],1800,1);render()}
+/* 掃過全部 16 個 MIDI channel。有些琴的鍵盤燈只吃特定 channel（不一定是 1），
+   只送一個 channel 的話，燈明明能亮也會被誤判成不支援。
+   velocity 1 幾乎不發聲，所以連送 16 次不會吵。 */
+if(action==='midi-test'){
+  state.lightTested=true;
+  const n=midi('C4');
+  for(let ch=0;ch<16;ch++){
+    (function(c){
+      setTimeout(function(){
+        midiSend([0x90|c,n,1]);
+        setTimeout(function(){midiSend([0x80|c,n,0])},1200)},c*90)})(ch)}
+  render()}
 if(action==='mark'){const s=impCurrent();if(s){
   if(!state.progress[s.id])state.progress[s.id]={};
   state.progress[s.id][state.impBar]=Number(button.dataset.lv);
