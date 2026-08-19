@@ -661,14 +661,22 @@ function midiPanel(){
       +'<button class="'+(state.autoAdvance?'on':'')+'" data-action="midi-auto">'+(state.autoAdvance?'✓ ':'')+'整小節對了就前進</button>'
       +'<button data-action="midi-reset">歸零統計</button></div>');}
   if(st==='connecting')return box('','<b>正在連接…</b>');
-  if(st==='nodevice')return box('warn','<b>找不到琴</b><p class="midi-tip">請確認 USB-C 線已接上電腦、琴已開機，然後再按一次。</p><button data-action="midi-connect">重新偵測</button>');
+  if(st==='nodevice')return box('warn','<b>找不到琴</b>'
+    +'<p class="midi-tip"><b>最常見的原因是線只能充電、不能傳資料</b>——兩種線外觀一模一樣，'
+    +'插上去琴會有反應，但電腦認不到。Apple 原廠的 USB-C 充電線就是這種，隨琴附的線也常是。'
+    +'請改用手機傳照片那條，或包裝上標示支援資料傳輸的線。</p>'
+    +'<p class="midi-tip">依序檢查：①琴要開機　②換一條能傳資料的 USB-C 線　'
+    +'③用 macOS 的「音訊 MIDI 設定」→ 視窗 → 顯示 MIDI 工作室，看得到琴的名字才算接通。</p>'
+    +'<button data-action="midi-connect">重新偵測</button>');
   if(st==='denied')return box('warn','<b>沒有取得權限</b><p class="midi-tip">瀏覽器要問你「允許使用 MIDI 裝置」，請選允許。'+(midiIO.error?'（'+midiIO.error+'）':'')+'</p><button data-action="midi-connect">再試一次</button>');
   if(st==='unsupported')return box('warn','<b>這個瀏覽器不支援</b><p class="midi-tip">請改用 Chrome 或 Edge。Safari 沒有 MIDI 功能。</p>');
   if(st==='insecure')return box('warn','<b>這個開啟方式無法使用 MIDI</b><p class="midi-tip">直接雙擊檔案（file://）拿不到 MIDI 權限。請改用 <b>http://localhost:8777/</b> 或線上版網址開啟。</p>');
   return box('',
     '<div class="midi-head"><b>接上你的電鋼琴</b><span>選配</span></div>'
-    +'<p class="midi-tip">你的琴 USB-C 孔可以傳 MIDI。用 USB 線接上電腦後，'
+    +'<p class="midi-tip">你的琴 USB-C 孔可以傳 MIDI。接上電腦後，'
     +'程式就能知道你按了哪個鍵——<b>彈對自動跳下一個音，彈錯當場標紅</b>。</p>'
+    +'<p class="midi-tip">要用<b>能傳資料</b>的 USB-C 線（只能充電的線接了也認不到）、'
+    +'琴要開機、瀏覽器要用 Chrome 或 Edge。</p>'
     +'<button class="main" data-action="midi-connect">連接電鋼琴</button>')}
 
 /* 節拍器：短促的高頻點擊，跟琴聲分得開 */
