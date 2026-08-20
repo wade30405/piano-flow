@@ -76,7 +76,16 @@ button{font:inherit;color:inherit}
 .meter-track i{display:block;height:100%;background:var(--ok);transition:width .18s}
 .meter b{font-size:13px;letter-spacing:.03em}
 .meter .rep{font-size:12px;color:var(--muted)}
-.steps{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px}
+/* ---------- 拇指定位牌 ----------
+   放在步驟格「最前面」而不是鍵盤下方。手要先擺對位置才彈得下去，
+   這個資訊是第 0 步，不是註腳。 */
+.thumb-chip{display:flex;flex-direction:column;justify-content:center;flex:none;
+  min-width:82px;padding:8px 11px;border:2px solid var(--orange);background:#fdf3ef;
+  color:var(--ink)}
+.thumb-chip small{font-size:10px;color:#9a4b32;letter-spacing:.04em}
+.thumb-chip b{font:700 26px/1.1 Georgia,serif;color:var(--orange)}
+.thumb-chip em{font-size:10px;font-style:normal;color:var(--muted)}
+.steps{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:0 0 16px}
 .step{position:relative;min-width:68px;min-height:68px;padding:9px 9px 17px;
   border:2px solid var(--line);background:var(--white);color:var(--ink);
   text-align:center;cursor:pointer}
@@ -96,17 +105,28 @@ button{font:inherit;color:inherit}
 /* 雙手：兩手排在同一條時間軸上，直向對齊就看得出誰跟誰同時 */
 .steps.two{display:block}
 .strow{display:flex;align-items:stretch;gap:5px;margin-bottom:5px;overflow-x:auto;padding-bottom:2px}
-.strow-label{display:flex;align-items:center;flex:none;min-width:46px;padding:0 8px;
-  background:var(--ink);color:var(--white);font:700 12px/1 inherit}
+.strow-label{display:flex;flex-direction:column;justify-content:center;flex:none;
+  min-width:74px;padding:4px 8px;background:var(--ink);color:var(--white);
+  font:700 12px/1.35 inherit}
+.strow-label u{display:block;font-size:10px;font-weight:400;color:var(--acid);
+  text-decoration:none}
 .strow .step{flex:1;min-width:62px}
 .step .hold{color:var(--muted);opacity:.55}
 
 /* ---------- 現在要按哪個鍵 ---------- */
-.target{display:flex;align-items:center;gap:16px;margin:0 0 14px;padding:14px 16px;
-  border:2px solid var(--ink);background:var(--acid)}
-.target-key{display:grid;place-items:center;flex:none;width:98px;height:98px;
-  border:2px solid var(--ink);background:var(--white);color:var(--ink)}
+.target{display:flex;flex-wrap:wrap;align-items:center;gap:16px;margin:0 0 14px;
+  padding:14px 16px;border:2px solid var(--ink);background:var(--acid)}
+.target-hand{display:inline-block;margin-right:8px;padding:3px 9px;background:var(--ink);
+  color:var(--white);font-size:13px;font-weight:700;vertical-align:2px}
+/* 寬度不能寫死。四音和弦「28+27+25+23」會撐爆盒子壓到右邊的字上——
+   那正是使用者回報的「亂碼」。三個音以上改成直向堆疊：橫著排看起來像
+   「先後按」，堆起來才看得出「同時按」。 */
+.target-key{display:grid;place-items:center;flex:none;min-width:98px;width:auto;
+  min-height:98px;padding:8px 14px;border:2px solid var(--ink);
+  background:var(--white);color:var(--ink)}
 .target-key b{font:700 42px/1 Georgia,serif}
+.target-key.n2 b{font-size:30px}
+.target-key.stack b{display:flex;flex-direction:column;gap:2px;font-size:23px;line-height:1.1}
 .target-key small{margin-top:3px;font-size:10px;color:var(--muted);letter-spacing:.06em}
 .target-key.blk{background:var(--ink);color:var(--white)}
 .target-key.blk b{font-size:30px}
@@ -158,6 +178,18 @@ button{font:inherit;color:inherit}
 .demo-btn{padding:11px 17px;border:2px solid var(--ink);background:var(--ink);
   color:var(--white);font:700 14px/1 inherit;cursor:pointer}
 .demo-btn.on{background:var(--orange);border-color:var(--orange)}
+/* ---------- 暫停 ----------
+   練到一半要能停下來。沒有出口的流程會讓人不敢開始。 */
+.pause-btn{flex:none;padding:9px 14px;border:2px solid var(--white);background:transparent;
+  color:var(--white);font:700 13px/1 inherit;cursor:pointer;white-space:nowrap}
+.pause-btn:hover{background:var(--acid);color:var(--ink);border-color:var(--acid)}
+.pause-btn.on{background:var(--orange);border-color:var(--orange)}
+.paused-banner{margin:0 0 14px;padding:16px 18px;border:2px solid var(--orange);
+  background:#fff0d9}
+.paused-banner b{display:block;font-size:20px;color:var(--orange)}
+.paused-banner p{margin:5px 0 0;font-size:14px;line-height:1.6;color:#5a4436}
+.stage.paused .steps,.stage.paused .target,.stage.paused .piano-wrap{opacity:.4}
+.stage.paused .target{background:var(--wash)}
 
 /* ---------- 鍵盤 ---------- */
 .piano-wrap{margin:0 0 14px}
@@ -383,7 +415,8 @@ const NAMES=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
 const state=Object.assign({
   song:"",tab:"catalog",noteIndex:0,bpm:36,impBar:1,impPage:0,zoom:false,
   hand:"rh",metro:false,repTarget:1,progress:{},ignoreOctave:false,
-  hit:0,miss:0,lightKeys:false,useKeyboardSound:false,lightTested:false
+  hit:0,miss:0,lightKeys:false,useKeyboardSound:false,lightTested:false,
+  accomp:false,paused:false
 },JSON.parse(localStorage.getItem("pianoFlowStandaloneState")||"{}"));
 
 /* 曲目順序：由易到難——單音入門 → 純白鍵 → 原調。新手打開就落在最容易的 */
@@ -394,6 +427,7 @@ function orderedSongs(){
 const _valid=orderedSongs().map(function(s){return 'imp:'+s.id}).concat(['lifelong']);
 if(_valid.indexOf(state.song)<0)state.song=_valid[0];
 if(!state.progress)state.progress={};
+state.paused=false;   /* 暫停是暫態，重開頁面不該還停著 */
 
 const app=document.getElementById("app");
 function save(){localStorage.setItem("pianoFlowStandaloneState",JSON.stringify(state))}
@@ -653,6 +687,16 @@ function curSteps(){return practiceSteps(curKind(),curBar(),state.hand)}
 const ADVANCE_MS=1400;   /* 完成後停留多久再自動前進；夠看清楚，又不至於等到不耐煩 */
 const drill={pressed:{},bad:null,reps:0,miss:0,clean:0,banner:null,timer:null};
 
+function pauseToggle(){
+  state.paused=!state.paused;
+  if(state.paused){
+    if(drill.timer){clearTimeout(drill.timer);drill.timer=null}
+    drill.banner=null;drill.pressed={};drill.bad=null;
+    demoStop();midiLightsOff();
+  }
+  save();render._k=null;render();
+  if(!state.paused)lightNow()}
+
 function drillReset(keepReps){
   if(drill.timer){clearTimeout(drill.timer);drill.timer=null}
   drill.pressed={};drill.bad=null;drill.banner=null;drill.miss=0;
@@ -675,6 +719,7 @@ function pressKey(note){
 
 /* 判定一個按下去的音。收到的是 MIDI 音高數字。 */
 function judgeNote(m){
+  if(state.paused)return;            /* 暫停中：琴照樣能彈，只是不推進度 */
   if(demo.on)return;                 /* 示範播放中不判定，免得被自己的示範打斷 */
   if(drill.banner)return;            /* 完成畫面停留期間忽略，避免手殘連按跳過兩節 */
   const st=curSteps();
@@ -699,9 +744,42 @@ function judgeNote(m){
 
 function stepDone(st){
   drill.pressed={};
+  playAccomp(state.noteIndex);   /* 你彈這隻手，另一隻手我幫你按 */
   state.noteIndex++;
   if(state.noteIndex>=st.length)barDone();
   else{render._k=null;render()}}
+
+/* ---------- 自動伴奏 ----------
+   右手彈到哪一拍，就把左手該按的和弦幫他按下去（反之亦然）。
+   兩手合起來是最難的一關，但很多時候使用者只是想聽到「合起來的樣子」，
+   而不是真的要同時控制兩隻手。
+
+   關鍵是**不能照自己這隻手的節奏每一拍都重敲另一手**——左手常常是一個
+   撐滿整個小節的長音，每拍重敲會變成連續的敲擊聲，聽起來完全不像伴奏。
+   只在另一手「真的換和弦」的那一拍按下去，並且讓它一直響到下次換和弦。 */
+function playAccomp(i){
+  if(!state.accomp||state.hand==='both'||state.paused)return;
+  const kind=curKind(),bar=curBar();
+  const s=impSong(kind.slice(4));
+  const mineC=barChords(kind,bar,state.hand);
+  const mineT=s?impTimes(s,bar,state.hand):[];
+  const t=mineT[i]!==undefined?mineT[i]:i/Math.max(1,mineC.length);
+  const other=state.hand==='rh'?'lh':'rh';
+  const oc=barChords(kind,bar,other);
+  if(!oc.length)return;
+  const ot=s?impTimes(s,bar,other):[];
+  /* 找「時間點在我之前、最靠近的那一個」——也就是此刻正按著的和弦 */
+  let pick=null,isNew=false,idx=-1;
+  for(let k=0;k<oc.length;k++){
+    const kt=ot[k]!==undefined?ot[k]:k/Math.max(1,oc.length);
+    if(kt<=t+0.02){pick=oc[k];isNew=Math.abs(kt-t)<=0.02;idx=k}}
+  if(!pick||!isNew)return;   /* 不是換和弦的那一拍就維持不動，不要重敲 */
+  const curT=ot[idx]!==undefined?ot[idx]:idx/oc.length;
+  const nextT=(idx+1<oc.length)
+    ? (ot[idx+1]!==undefined?ot[idx+1]:(idx+1)/oc.length) : 1;
+  const barSec=autoBarSec();
+  const hold=Math.min(3.2,Math.max(.6,(nextT-curT)*barSec*0.98));
+  pick.forEach(function(n){sound(n,hold)})}
 
 /* 一個小節走完了 */
 function barDone(){
@@ -879,7 +957,7 @@ function sound(note,dur){
 /* 目前該按的鍵，在琴上點亮 */
 function lightNow(){
   if(!state.lightKeys)return;
-  if(demo.on||drill.banner)return;
+  if(state.paused||demo.on||drill.banner)return;
   const st=curSteps();
   if(!st.length)return;
   const cur=st[state.noteIndex%st.length];
@@ -952,7 +1030,7 @@ function stageView(song){
     : barNotes(kind,bar,state.hand);
   const cur=st[idx];
   const okNotes=cur?cur.keys.filter(function(n){return drill.pressed[midi(n)]}):[];
-  return '<section class="stage">'
+  return '<section class="stage'+(state.paused?' paused':'')+'">'
     +'<div class="stage-head">'
       +'<div class="bar-nav">'
       +'<button data-action="bar" data-bar="'+(bar-1)+'"'+(bar===1?' disabled':'')+' aria-label="上一小節">‹</button>'
@@ -961,14 +1039,22 @@ function stageView(song){
       +'<button data-action="bar" data-bar="'+(bar+1)+'"'+(bar>=song.totalBars?' disabled':'')+' aria-label="下一小節">›</button>'
       +'</div><div class="grow"></div>'
       +(song.life?'':handSeg())
+      /* 終止的出口要放在最好找的地方。沒有出口的流程會讓人不敢開始。 */
+      +'<button class="pause-btn'+(state.paused?' on':'')+'" data-action="pause">'
+      +(state.paused?'▶ 繼續練習':'❚❚ 暫停')+'</button>'
     +'</div>'
     +'<div class="stage-body">'
       +(song.life?whiteToggle(kind):'')
+      +(state.paused
+        ? '<div class="paused-banner"><b>❚❚ 已暫停</b>'
+          +'<p>現在按琴不會推進度，燈也熄了，可以放心休息或自己亂彈一下。'
+          +'要繼續就按上面的「▶ 繼續練習」。</p></div>'
+        : '')
       +bannerView(song)
       +meterView(st)
       +stepsView(kind,bar,st)
       +targetView(song,st,idx)
-      +keyboard({active:(cur&&!drill.banner)?cur.keys:[],inbar:inbar,
+      +keyboard({active:(cur&&!drill.banner&&!state.paused)?cur.keys:[],inbar:inbar,
                  ok:okNotes,bad:drill.bad?[drill.bad]:[]})
       +hintView(kind,bar,st)
     +'</div>'
@@ -1037,6 +1123,16 @@ function meterView(st){
 /* ---------- 步驟格 ----------
    一個小節切成幾步、你走到哪一步、哪幾步已經過了——這就是「以小節為單位」
    在畫面上的樣子。以前只有一顆高亮的格子，看不出自己在整節裡的位置。 */
+/* ---------- 拇指定位牌 ----------
+   放在步驟格「最前面」，不是鍵盤下方的註腳。手要先擺對位置才彈得下去——
+   這個資訊是第 0 步。使用者的原話：「一定要加這樣的提示，才有辦法快速銜接」。 */
+function thumbChip(kind,bar,hand){
+  const p=handPosition(barNotes(kind,bar,hand),hand);
+  if(!p)return '';
+  return '<div class="thumb-chip"><small>'+(hand==='lh'?'左手':'右手')+'拇指放</small>'
+    +'<b>'+p.thumb+'</b>'
+    +'<em>'+(p.oneShape?'跨 '+p.span+' 鍵·不用移手':'跨 '+p.span+' 鍵·中途要移手')+'</em></div>'}
+
 function stepsView(kind,bar,st){
   if(!st.length)return '';
   const done=drill.banner?st.length:state.noteIndex;
@@ -1055,20 +1151,24 @@ function stepsView(kind,bar,st){
     return '<span class="n'+(hold?' hold':'')+'">'
       +ch.map(numberLabel).join('<i>+</i>')+'</span>'};
   if(state.hand!=='both')
-    return '<div class="steps">'+st.map(function(s,i){
-      return '<button class="step'+cls(i)+'" data-action="step" data-index="'+i+'">'
-        +nums(s.keys)+'<span class="step-idx">第 '+(i+1)+' 步</span>'+dur(i)+'</button>'}).join('')
+    return '<div class="steps">'
+      +thumbChip(kind,bar,state.hand)
+      +st.map(function(s,i){
+        return '<button class="step'+cls(i)+'" data-action="step" data-index="'+i+'">'
+          +nums(s.keys)+'<span class="step-idx">第 '+(i+1)+' 步</span>'+dur(i)+'</button>'}).join('')
       +'</div>';
   /* 雙手：兩手排在同一條時間軸上，直向對齊就看得出誰跟誰同時。
      左手淡色＝繼續壓著、不要重按——這是實際被問過的問題。 */
-  const row=function(label,pick,holdOf){
-    return '<div class="strow"><span class="strow-label">'+label+'</span>'
+  const row=function(label,hand,pick,holdOf){
+    const p=handPosition(barNotes(kind,bar,hand),hand);
+    return '<div class="strow"><span class="strow-label">'+label
+      +(p?'<u>拇指 '+p.thumb+'</u>':'')+'</span>'
       +st.map(function(s,i){
         return '<button class="step'+cls(i)+'" data-action="step" data-index="'+i+'">'
           +nums(pick(s),holdOf(s))+dur(i)+'</button>'}).join('')+'</div>'};
   return '<div class="steps two">'
-    +row('右手',function(s){return s.rh},function(){return false})
-    +row('左手',function(s){return s.lh},function(s){return !s.lhNew})
+    +row('右手','rh',function(s){return s.rh},function(){return false})
+    +row('左手','lh',function(s){return s.lh},function(s){return !s.lhNew})
     +'</div>'}
 
 /* ---------- 現在要按哪個鍵 ---------- */
@@ -1082,24 +1182,38 @@ function targetView(song,st,idx){
   const keys=cur.keys;
   const got=keys.filter(function(n){return drill.pressed[midi(n)]}).length;
   const blk=keys.length===1&&isBlack(keys[0]);
+  /* 幾個鍵就用幾種排法。三個以上直向堆疊——橫著排會撐爆盒子壓到旁邊的字，
+     而且看起來像「先後按」；堆起來才看得出「同時按」。 */
+  const box=function(caption){
+    const cls=keys.length>=3?' stack':keys.length===2?' n2':'';
+    const inner=keys.length>=3
+      ? keys.map(function(n){return '<span>'+numberLabel(n)+'</span>'}).join('')
+      : keys.map(numberLabel).join('<i>+</i>');
+    return '<div class="target-key'+cls+(blk?' blk':'')+'">'
+      +'<b>'+inner+'</b><small>'+caption+'</small></div>'};
+  /* 左右手一定要標出來，否則單手模式下看不出這幾個數字是哪隻手要按的 */
+  const hand=state.hand==='both'?'':'<span class="target-hand">'
+    +(state.hand==='rh'?'右手':'左手')+'</span>';
+  /* 四個鍵時「請同時按 白鍵28號 和 白鍵27號 和 白鍵25號 和 白鍵23號」太長，
+     會換行擠成一團。三個以上改成列舉。 */
+  const say=keys.length>=3
+    ? '請同時按這 '+keys.length+' 個鍵：'+keys.map(numberLabel).join('、')
+    : '請'+(keys.length>1?'同時按 ':'按 ')+keys.map(keyLabel).join('　和　');
   if(drill.bad)
-    return '<div class="target wrong">'
-      +'<div class="target-key'+(keys.length>1?' multi':'')+(blk?' blk':'')+'">'
-      +'<b>'+keys.map(numberLabel).join('<i>+</i>')+'</b><small>要按這個</small></div>'
-      +'<div class="target-say"><b>你按的是 '+keyLabel(drill.bad)+'</b>'
-      +'<small>要按的是 '+keys.map(keyLabel).join('　和　')+'　·　再試一次就好，不會扣分。</small>'
+    return '<div class="target wrong">'+box('要按這個')
+      +'<div class="target-say"><b>'+hand+'你按的是 '+keyLabel(drill.bad)+'</b>'
+      +'<small>'+say+'　·　再試一次就好，不會扣分。</small>'
       +'</div></div>';
-  return '<div class="target">'
-    +'<div class="target-key'+(keys.length>1?' multi':'')+(blk?' blk':'')+'">'
-    +'<b>'+keys.map(numberLabel).join('<i>+</i>')+'</b>'
-    +'<small>'+(blk?'黑鍵':'白鍵')+'</small></div>'
+  return '<div class="target">'+box(blk?'黑鍵':'白鍵')
     +'<div class="target-say">'
-    +'<b>請'+(keys.length>1?'同時按　':'按 ')+keys.map(keyLabel).join('　和　')+'</b>'
+    +'<b>'+hand+say+'</b>'
     +'<small>第 '+(idx+1)+' ／ '+st.length+' 步'
     +(keys.length>1?'　·　已按下 '+got+'／'+keys.length+' 個鍵':'')
     +'　·　音名 '+keys.join(' + ')
     +(state.hand==='both'&&cur.lh&&cur.lh.length&&!cur.lhNew
       ? '　·　左手 '+cur.lh.map(numberLabel).join('+')+' 繼續壓著，不用重按':'')
+    +(state.accomp&&state.hand!=='both'
+      ? '　·　'+(state.hand==='rh'?'左':'右')+'手我幫你彈':'')
     +'</small></div></div>'}
 
 /* ---------- 手位與節奏：兩行字，不值得做成收合區塊 ----------
@@ -1147,6 +1261,11 @@ function footView(song,bar){
     +'<b style="font-size:13px">♩='+state.bpm+'</b>'
     +'<button class="ghost'+(state.metro?' on':'')+'" data-action="metro" '
     +'title="只在示範與自動彈奏時會響">節拍器</button></div>'
+    /* 只在單手練習時才有意義：你彈一隻手，另一隻手我幫你按 */
+    +(song.life||state.hand==='both'?''
+      :'<div class="foot-item"><label>伴奏</label>'
+       +'<button class="ghost'+(state.accomp?' on':'')+'" data-action="accomp">'
+       +(state.accomp?'✓ ':'')+'自動幫我彈'+(state.hand==='rh'?'左':'右')+'手</button></div>')
     +(song.life?'':'<div class="foot-item"><label>熟練度</label>'
       +seg('mark',[[0,'還沒練'],[1,'練過了'],[2,'已熟','lv2']],lv)+'</div>')
     +'</div>'}
@@ -1598,6 +1717,8 @@ document.addEventListener('click',function(e){
       render._k=null;render()}
     return}
   if(a==='demo'){demoRun();return}
+  if(a==='pause'){pauseToggle();return}
+  if(a==='accomp'){state.accomp=!state.accomp;save();render();return}
   if(a==='stay'){
     if(drill.timer){clearTimeout(drill.timer);drill.timer=null}
     drill.banner=null;drill.reps=0;drill.miss=0;state.noteIndex=0;
